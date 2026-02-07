@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtualenv
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# CDK output
+cdk/cdk.out/
+
+# OS
+.DS_Store
