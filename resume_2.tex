@@ -1,0 +1,130 @@
+\documentclass[10pt]{article}
+\usepackage[
+letterpaper,
+top=0.40in,
+bottom=0.40in,
+left=0.40in,
+right=0.40in]{geometry}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else
+  \usepackage{fontspec}
+  \newcommand{\CalibriPath}{cdk/lambda/fonts/calibri/}
+  \setmainfont{Calibri}[
+    Path=\CalibriPath,
+    Extension=.ttf,
+    UprightFont=Calibri,
+    BoldFont=Calibrib,
+    ItalicFont=Calibrii,
+    BoldItalicFont=calibrili
+  ]
+\fi
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\raggedright
+\pagestyle{empty}
+\setlength{\parskip}{0pt}
+\newcommand{\BodyTextSize}{\fontsize{10.5pt}{11.25pt}\selectfont}
+
+\ifPDFTeX
+  \input{glyphtounicode}
+  \pdfgentounicode=1
+\fi
+
+\titleformat{\section}{\bfseries\large}{}{0pt}{}[\vspace{0.5pt}\titlerule\vspace{1pt}]
+\titlespacing*{\section}{0pt}{4pt}{2pt}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\small$\bullet$}}$}
+\setlist[itemize]{itemsep=-1pt, leftmargin=9pt, topsep=3pt, parsep=0pt, partopsep=0pt}
+
+\begin{document}
+
+\begin{center}
+{\LARGE \textbf{UMANG SHAH}}\\[-1pt]
+Data Engineer -- New York\\[-1pt]
+\BodyTextSize \href{mailto:umangshah97@gmail.com}{umangshah97@gmail.com} \;|\; \href{https://umangshah.me}{umangshah.me} \;|\; \href{https://www.linkedin.com/in/shah-umang-me}{linkedin.com/in/shah-umang-me} \;|\; \href{https://github.com/umangshah-js}{github.com/umangshah-js}
+\end{center}
+
+\vspace{-2pt}
+\BodyTextSize
+
+\section*{Summary}
+Data Engineer with 4+ years building scalable ETL, real-time streaming, and cloud-native platforms across fintech and healthcare.
+
+\vspace{0pt}
+
+\section*{Education}
+\textbf{New York University} -- M.S. in Computer Science, GPA: 3.96/4.0 \hfill \textit{Sep 2022 -- May 2024} \\
+\textbf{VIT Chennai} -- B.Tech in Computer Science and Engineering, GPA: 9.16/10 \hfill \textit{Jul 2015 -- May 2019}
+
+\vspace{0pt}
+
+\section*{Experience}
+\textbf{Analyst (Data / Software Engineering),} Nomura Holdings America -- New York, NY \hfill \textit{Jul 2024 -- Present} \\
+\vspace{0pt}
+\begin{itemize}
+  \item Delivered 67+ end-to-end features on a 15+ year .NET C\# pricing platform by modernizing payoff logic and trade-pricing workflows.
+  \item Added buffer-coupon pricing to provide fast provisional charge estimates on incoming trades, enabling desks to act on quotes before final accurate valuation completed.
+  \item Reduced manual trader workflows by replacing Excel-based pricing with request-driven pipelines using hybrid REST and pub-sub compute.
+  \item Automated the 144A post-trade lifecycle with bulk import, instrument creation, booking-line management, and contract generation.
+  \item Improved pricing accuracy and trade visibility by integrating Euclid APIs, Radar, and Bloomberg into front-to-back workflows.
+\end{itemize}
+
+\textbf{Software Engineer Intern,} MIO Partners (McKinsey Investment Office) -- New York, NY \hfill \textit{Jun 2023 -- Aug 2023} \\
+\vspace{0pt}
+\begin{itemize}
+  \item Improved ETL reliability and developer velocity by migrating ActiveBatch/Talend workflows to AWS Step Functions + S3 and building a portal for logs, trigger history, and one-click runs.
+\end{itemize}
+
+\textbf{Senior Software Engineer (Data Engineering),} UnitedHealth Group -- Hyderabad, India \hfill \textit{Jul 2019 -- Jul 2022} \\
+\vspace{0pt}
+\begin{itemize}
+  \item Standardized healthcare onboarding by building DXP pipelines ingesting flat files, CCD XML, HL7 messages, and Kafka streams into partitioned Hive Parquet datasets.
+  \item Improved data quality and reliability through ingestion validation, Airflow orchestration, and Python/Angular controls for client scheduling and source formats.
+  \item Delivered MTD/YTD analytics pipelines across 26M+ members on large Hive/Spark clusters; used single-query Hive for straightforward workloads and spearheaded PySpark jobs for complex transformations, tuning memory by queue and node capacity for stable throughput.
+  \item Reduced near-real-time data SLA from 6 hours to 10 minutes by designing and deploying Kafka-based streaming pipelines.
+  \item Reduced infrastructure cost and production downtime by migrating core services to Kubernetes.
+  \item Improved incident detection and recovery by implementing Grafana and Prometheus monitoring/alerting for mission-critical workflows.
+\end{itemize}
+
+\vspace{0pt}
+
+\section*{Skills}
+\textbf{Data Engineering:} Spark, Kafka, Hive, HDFS, Snowflake, ETL, PostgreSQL, SQL, MongoDB, HBase, Redis, KDB+ \\
+\textbf{Cloud \& DevOps:} AWS, Azure, Kubernetes, Docker, CI/CD, Jenkins, Nginx \\
+\textbf{Web \& Backend:} Node.js, Flask, .NET Framework, FastAPI \\
+\textbf{Analytics \& ML:} Pandas, Tableau, D3.js, Chart.js, NLTK, StanfordNLP \\
+\textbf{Programming \& Version Control:} Python, JavaScript, Java, C\#, Git
+
+\vspace{0pt}
+
+\section*{Projects}
+\textbf{Media Magic} (\href{https://media-magic.umangshah.me}{Live Demo}) \hfill \textit{Sep 2023 -- Dec 2023} \\
+\vspace{0pt}
+\begin{itemize}
+  \item Built a developer-first image delivery platform on AWS (S3 \textrightarrow{} SQS \textrightarrow{} Lambda \textrightarrow{} DynamoDB) plus SDK/CLI tooling, enabling path-based integration and sub-200ms image responses.
+  \item Improved visual consistency and processing efficiency by using OpenCV + YOLO smart-focus cropping, then adding hash-based idempotency and lease-based request coalescing to prevent duplicate transforms.
+  \item Improved delivery reliability and observability by orchestrating CloudFront-backed on-demand WebP transforms with readiness-aware retries and analytics for throughput, transform latency, and cache-hit efficiency.
+\end{itemize}
+
+\textbf{Forest Fire Tracker} (\href{https://github.com/umangshah-js/forest-fire-tracker}{GitHub}) \hfill \textit{Feb 2023 -- Apr 2023} \\
+\vspace{0pt}
+\begin{itemize}
+  \item Built a Kafka-driven streaming pipeline to process Unity-generated satellite-image grids across ingestion, preprocessing, and analytics stages.
+  \item Generated near-real-time fire-risk progression states by implementing OpenCV-based tree/cluster detection, fire-region extraction, and iterative spread prediction.
+  \item Delivered reliable, live operational visibility by orchestrating Redis state management, Dask aggregation, and a Dash metrics dashboard with flow-control signaling.
+\end{itemize}
+
+\vspace{0pt}
+
+\section*{Awards}
+\begin{itemize}
+  \item Won ``Open Gov Data Hack'' 2018, a national-level competition organized by NIC, Government of India.
+  \item Won best project award in Technical Expo'18, VIT Chennai.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,285 @@
+{
+  "source": "dynamodb:linkedin_jobs (scan 2026-02-10)",
+  "jobs_with_descriptions": 273,
+  "individual_skill_counts": {
+    "airflow": 19,
+    "aws": 85,
+    "azure": 45,
+    "bigquery": 11,
+    "cdc": 2,
+    "cloud composer": 0,
+    "data warehouse": 32,
+    "databricks": 20,
+    "db modeling": 38,
+    "dbt": 12,
+    "docker": 29,
+    "etl/elt": 38,
+    "gcp": 45,
+    "hadoop": 9,
+    "hive": 1,
+    "java": 65,
+    "kafka": 24,
+    "kubernetes": 31,
+    "mongodb": 10,
+    "postgresql": 25,
+    "pubsub": 3,
+    "python": 145,
+    "redis": 10,
+    "redshift": 11,
+    "scala": 23,
+    "snowflake": 34,
+    "spark": 34,
+    "sql": 98,
+    "streaming": 55,
+    "terraform": 17,
+    "athena": 7,
+    "cassandra": 8,
+    "clickhouse": 8,
+    "dagster": 5,
+    "data factory": 6,
+    "datadog": 8,
+    "delta lake": 5,
+    "dynamodb": 10,
+    "emr": 8,
+    "fivetran": 2,
+    "flink": 8,
+    "glue": 13,
+    "grafana": 5,
+    "iceberg": 3,
+    "informatica": 2,
+    "javascript": 27,
+    "kinesis": 8,
+    "looker": 14,
+    "luigi": 2,
+    "matillion": 2,
+    "mysql": 13,
+    "oracle": 9,
+    "power bi": 21,
+    "prefect": 4,
+    "presto": 4,
+    "prometheus": 6,
+    "quicksight": 3,
+    "sql server": 17,
+    "synapse": 5,
+    "tableau": 28,
+    "teradata": 2,
+    "typescript": 48
+  },
+  "group_definitions": {
+    "cloud_provider": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "data_warehouse_platform": [
+      "bigquery",
+      "clickhouse",
+      "redshift",
+      "snowflake",
+      "synapse",
+      "teradata"
+    ],
+    "stream_processing": [
+      "flink",
+      "kafka",
+      "kinesis",
+      "pubsub",
+      "spark"
+    ],
+    "orchestration": [
+      "airflow",
+      "cloud composer",
+      "dagster",
+      "luigi",
+      "prefect"
+    ],
+    "lakehouse": [
+      "databricks",
+      "delta lake",
+      "iceberg"
+    ],
+    "infra_iac": [
+      "terraform"
+    ],
+    "containers": [
+      "docker",
+      "kubernetes"
+    ],
+    "languages": [
+      "java",
+      "javascript",
+      "python",
+      "scala",
+      "sql",
+      "typescript"
+    ],
+    "etl_elt": [
+      "data factory",
+      "etl/elt",
+      "fivetran",
+      "glue",
+      "informatica",
+      "matillion"
+    ],
+    "modeling": [
+      "db modeling"
+    ],
+    "batch_big_data": [
+      "emr",
+      "hadoop",
+      "hive"
+    ],
+    "data_warehouse_concept": [
+      "data warehouse"
+    ],
+    "streaming_concept": [
+      "streaming"
+    ],
+    "cdc": [
+      "cdc"
+    ],
+    "analytics_engineering": [
+      "dbt",
+      "looker",
+      "power bi",
+      "quicksight",
+      "tableau"
+    ],
+    "databases": [
+      "cassandra",
+      "dynamodb",
+      "mysql",
+      "oracle",
+      "sql server"
+    ],
+    "observability": [
+      "datadog",
+      "grafana",
+      "prometheus"
+    ],
+    "query_engine": [
+      "presto"
+    ]
+  },
+  "group_counts": {
+    "cloud_provider": 175,
+    "data_warehouse_platform": 71,
+    "stream_processing": 77,
+    "orchestration": 30,
+    "lakehouse": 28,
+    "infra_iac": 17,
+    "containers": 60,
+    "languages": 406,
+    "etl_elt": 63,
+    "modeling": 38,
+    "batch_big_data": 18,
+    "data_warehouse_concept": 32,
+    "streaming_concept": 55,
+    "cdc": 2,
+    "analytics_engineering": 78,
+    "databases": 57,
+    "observability": 19,
+    "query_engine": 4
+  },
+  "resume_skills": [
+    ".Net Framework",
+    "API Gateway",
+    "AWS",
+    "Amplify",
+    "Angular",
+    "Apache HTTPd",
+    "Azure",
+    "C",
+    "C#",
+    "CI/CD",
+    "Charts.js",
+    "CloudFront",
+    "Cognito",
+    "D3.js",
+    "Dash",
+    "Dask",
+    "Docker",
+    "ETL",
+    "Fast API",
+    "Flask",
+    "Flask-RESTful",
+    "Git",
+    "Grafana",
+    "HBase",
+    "HDFS",
+    "Hive",
+    "Java",
+    "JavaScript",
+    "Jenkins",
+    "KDB+",
+    "Kafka",
+    "Kubernetes",
+    "Lambda",
+    "MongoDB",
+    "NLTK",
+    "Nginx",
+    "Node.js",
+    "OpenCV",
+    "Pandas",
+    "PostgreSQL",
+    "Prometheus",
+    "Python",
+    "Redis",
+    "Rekognition",
+    "S3",
+    "SQL",
+    "Snowflake",
+    "Spark",
+    "StanfordNLP",
+    "Step Functions",
+    "Tableau",
+    "Talend"
+  ],
+  "resume_skill_groups": {
+    "cloud_provider": [
+      "API Gateway",
+      "AWS",
+      "Amplify",
+      "Azure",
+      "CloudFront",
+      "Cognito",
+      "Lambda",
+      "Rekognition",
+      "S3",
+      "Step Functions"
+    ],
+    "data_warehouse_platform": [
+      "Snowflake"
+    ],
+    "stream_processing": [
+      "Kafka",
+      "Spark"
+    ],
+    "orchestration": [],
+    "lakehouse": [],
+    "infra_iac": [],
+    "containers": [
+      "Docker",
+      "Kubernetes"
+    ],
+    "languages": [
+      "Java",
+      "JavaScript",
+      "PostgreSQL",
+      "Python",
+      "SQL"
+    ],
+    "etl_elt": [
+      "ETL"
+    ],
+    "modeling": [],
+    "batch_big_data": [
+      "HDFS",
+      "Hive"
+    ],
+    "data_warehouse_concept": [],
+    "streaming_concept": [],
+    "cdc": [],
+    "analytics_engineering": []
+  }
+}
