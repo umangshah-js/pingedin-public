@@ -91,12 +91,13 @@ SKILL_PATTERNS = {
 # Map canonical skills to resume categories
 CATEGORY_MAP = {
     'data engineering': [
-        'spark', 'kafka', 'pubsub', 'hive', 'hadoop', 'snowflake', 'etl/elt',
+        'spark', 'kafka', 'pubsub', 'hive', 'hadoop', 'snowflake', 'bigquery', 'redshift', 'etl/elt',
         'postgresql', 'mongodb', 'redis', 'dbt', 'data warehouse', 'db modeling',
         'athena', 'cassandra', 'clickhouse', 'data factory', 'delta lake',
         'dynamodb', 'emr', 'fivetran', 'flink', 'glue', 'iceberg',
         'informatica', 'kinesis', 'luigi', 'matillion', 'mysql', 'oracle',
-        'presto', 'sql server', 'synapse', 'teradata'
+        'presto', 'sql server', 'synapse', 'teradata', 'airflow', 'cloud composer',
+        'databricks', 'streaming', 'cdc', 'dagster', 'prefect'
     ],
     'cloud & devops': ['aws', 'azure', 'gcp', 'kubernetes', 'docker', 'terraform', 'datadog', 'grafana', 'prometheus'],
     'analytics & ml': ['tableau', 'power bi', 'looker', 'quicksight'],
