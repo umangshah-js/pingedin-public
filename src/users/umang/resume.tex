@@ -63,16 +63,16 @@
 \newcommand{\BodyStyle}{\fontsize{10}{10.5}\selectfont\color{BodyGray}}
 \newcommand{\ExpHeadingShift}{\hspace*{0in}}
 % Section spacing controls
-\newlength{\SectionTopSpace}\setlength{\SectionTopSpace}{4pt}
+\newlength{\SectionTopSpace}\setlength{\SectionTopSpace}{2pt}
 \newlength{\SectionRuleGap}\setlength{\SectionRuleGap}{-4pt}
-\newlength{\SectionAfterRuleSpace}\setlength{\SectionAfterRuleSpace}{1pt}
+\newlength{\SectionAfterRuleSpace}\setlength{\SectionAfterRuleSpace}{0pt}
 
 \renewcommand{\labelitemi}{\textbullet}
 \newlength{\BulletIndent}\setlength{\BulletIndent}{0.208in}
 \newlength{\BulletLabelWidth}\setlength{\BulletLabelWidth}{0.10in}
 \newlength{\BulletLabelSep}\setlength{\BulletLabelSep}{0.10in}
 \newlength{\BulletLeftMargin}\setlength{\BulletLeftMargin}{\BulletIndent}
-\newcommand{\BulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-1pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
+\newcommand{\BulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-2pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
 \newcommand{\SkillListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=2pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
 \newcommand{\BulletListEnd}{\end{itemize}}
 \newcommand{\BulletItem}[1]{\item #1}
@@ -136,7 +136,7 @@
   \end{minipage} \\
 \end{tabular*}
 
-\vspace{4pt}
+\vspace{0pt}
 
 % Summary
 {\SectionHeading{SUMMARY}}
@@ -159,14 +159,15 @@
 \end{tabular*}
 \par
 
-\vspace{2pt}
+\vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
     \BulletItem{{\BodyStyle Enhanced and maintained a \textbf{15+} year .NET C\# pricing platform, delivering \textbf{67+} end-to-end features, including new payoff capabilities like buffer coupons.}}
+    \BulletItem{{\BodyStyle Designed and developed a \textbf{Spark streaming pipeline prototype} to deliver real-time tracking of trade volume and sales credit revenue across multiple dimensions using \textbf{MongoDB change streams} and \textbf{RocksDB} aggregations, with checkpointing and watermarking for fault tolerance and idempotency.}}
     \BulletItem{{\BodyStyle Improved \textbf{request-driven} pricing pipelines and distributed compute workflows using a \textbf{hybrid REST and pub-sub architecture}, replacing manual Excel-based processes and streamlining trader operations.}}
     \BulletItem{{\BodyStyle Increased system reliability by optimizing memory management, crash handling, and validation controls, while enabling scalable, maintainable operations and improving client experience.}}
-    \BulletItem{{\BodyStyle Automated post-trade workflows for \textbf{144A} notes, handling bulk deal import, instrument creation, booking line management, and contract generation.}}
-    \BulletItem{{\BodyStyle Integrated with Euclid APIs, \textbf{Radar}, and \textbf{Bloomberg}, improving operational efficiency, accuracy, and client trade visibility.}}
+    \BulletItem{{\BodyStyle Automated 144A post-trade lifecycle with trade import, instrument creation, position booking, and contract generation.}}
+    \BulletItem{{\BodyStyle Integrated \textbf{Euclid}, \textbf{Radar}, and \textbf{Bloomberg} APIs to improve pricing accuracy and trade visibility.}}
   \BulletListEnd
 \end{minipage}
 
@@ -178,14 +179,14 @@
 \end{tabular*}
 \par
 
-\vspace{2pt}
+\vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
-    \BulletItem{{\BodyStyle Migrated Active Batch and Talend ETL jobs to AWS Step Functions and S3, improving orchestration, cost efficiency, and reliability of data pipelines.}}
+    \BulletItem{{\BodyStyle Migrated ActiveBatch/Talend workflows to AWS Step Functions + S3, improving ETL reliability and developer velocity.}}
   \BulletListEnd
 \end{minipage}
 
-\vspace{4pt}
+\vspace{0pt}
 
 \noindent\begin{tabular*}{\ExpW}{@{}p{\ExpIndent}p{\ExpA}p{\ExpB}@{}}
   & {\ExpHeadingShift\HeadingTwoStyle UnitedHealth Group \textbar{} Hyderabad, India} & {\HeadingThreeStyle\RaggedLeft\RightCell{Jul 19 \textendash{} Jul 22}} \\[-4pt]
@@ -193,13 +194,13 @@
 \end{tabular*}
 \par
 
-\vspace{2pt}
+\vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
     \BulletItem{{\BodyStyle Processed clinical data for \textbf{26M+} members using \textbf{Spark}, \textbf{Hive}, \textbf{HBase}, \textbf{Airflow}, and Snowflake, optimizing large-scale ETL pipelines.}}
     \BulletItem{{\BodyStyle Developed \textbf{real-time Kafka pipelines}, reducing data SLA from 6 hours to 10 minutes.}}
     \BulletItem{{\BodyStyle Migrated services to \textbf{Kubernetes}, decreasing application cost and downtime.}}
-    \BulletItem{{\BodyStyle Implemented \textbf{monitoring and alerting} using Grafana and Prometheus for mission-critical processes.}}
+    \BulletItem{{\BodyStyle Implemented \textbf{Grafana/Prometheus} monitoring/alerting to improve incident detection and recovery.}}
   \BulletListEnd
 \end{minipage}
 
@@ -224,11 +225,12 @@
   & {\HeadingTwoStyle Media Magic} {\HeadingThreeStyle (Real-Time Media Optimization, Transformation \& Delivery)} & {\HeadingThreeStyle\RaggedLeft\RightCell{Sep 23 \textendash{} Dec 23}} \\
 \end{tabular*}
 \par
-\vspace{2pt}
+\vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
-    \BulletItem{{\BodyStyle Developed a \textbf{no-code} solution for real-time image \textbf{transformation}, \textbf{optimization}, and \textbf{delivery}, achieving \textbf{<200ms} latency for responsive high-quality web optimized images.}}
-    \BulletItem{{\BodyStyle Designed scalable serverless architecture with \textbf{AWS S3}, \textbf{Lambda}, \textbf{Rekognition}, \textbf{CloudFront}, \textbf{Cognito}, \textbf{Amplify SDK}, \textbf{API Gateway}, and \textbf{Terraform}.}}
+    \BulletItem{{\BodyStyle Designed and developed an image optimization platform with React and Python SDKs, enabling developers to seamlessly deliver responsive, right-sized images across devices with minimal integration effort.}}
+    \BulletItem{{\BodyStyle Built a Quick-Check page that previews performance gains from any URL before SDK integration, with results across mobile and desktop viewports.}}
+    \BulletItem{{\BodyStyle Implemented event-driven data pipelines and per-image analytics tracking cache hit ratios, resolution distributions, load time, and transformation latency, with real-time dashboards and a developer overlay for inspecting image loading and optimization.}}
   \BulletListEnd
 \end{minipage}
 

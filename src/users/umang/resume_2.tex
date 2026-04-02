@@ -57,7 +57,7 @@ Data Engineer -- New York\\[-1pt]
 \BodyTextSize \href{mailto:umangshah97@gmail.com}{umangshah97@gmail.com} \;|\; \href{https://umangshah.me}{umangshah.me} \;|\; \href{https://www.linkedin.com/in/shah-umang-me}{linkedin.com/in/shah-umang-me} \;|\; \href{https://github.com/umangshah-js}{github.com/umangshah-js}
 \end{center}
 
-\vspace{-2pt}
+\vspace{-8pt}
 \BodyTextSize
 
 \section*{Summary}
@@ -76,27 +76,28 @@ Data Engineer with 4+ years building scalable ETL, real-time streaming, and clou
 \vspace{0pt}
 \begin{itemize}
   \item Delivered 67+ end-to-end features on a 15+ year .NET C\# pricing platform by modernizing payoff logic and trade-pricing workflows.
+  \item Designed and developed a Spark streaming pipeline prototype to deliver real-time tracking of trade volume and sales credit revenue across multiple dimensions using MongoDB change streams and RocksDB aggregations, with checkpointing and watermarking for fault tolerance and idempotency.
   \item Added buffer-coupon pricing to provide fast provisional charge estimates on incoming trades, enabling desks to act on quotes before final accurate valuation completed.
   \item Reduced manual trader workflows by replacing Excel-based pricing with request-driven pipelines using hybrid REST and pub-sub compute.
-  \item Automated the 144A post-trade lifecycle with bulk import, instrument creation, booking-line management, and contract generation.
-  \item Improved pricing accuracy and trade visibility by integrating Euclid APIs, Radar, and Bloomberg into front-to-back workflows.
+  \item Automated 144A post-trade lifecycle with trade import, instrument creation, position booking, and contract generation.
+  \item Integrated Euclid, Radar, and Bloomberg APIs to improve pricing accuracy and trade visibility.
 \end{itemize}
 
 \textbf{Software Engineer Intern,} MIO Partners (McKinsey Investment Office) -- New York, NY \hfill \textit{Jun 2023 -- Aug 2023} \\
 \vspace{0pt}
 \begin{itemize}
-  \item Improved ETL reliability and developer velocity by migrating ActiveBatch/Talend workflows to AWS Step Functions + S3 and building a portal for logs, trigger history, and one-click runs.
+  \item Migrated ActiveBatch/Talend workflows to AWS Step Functions + S3, improving ETL reliability and developer velocity.
 \end{itemize}
 
 \textbf{Senior Software Engineer (Data Engineering),} UnitedHealth Group -- Hyderabad, India \hfill \textit{Jul 2019 -- Jul 2022} \\
 \vspace{0pt}
 \begin{itemize}
+  \item Delivered MTD/YTD analytics pipelines across 26M+ members on large Hive/Spark clusters; used single-query Hive for straightforward workloads and spearheaded PySpark jobs for complex transformations, tuning memory by queue and node capacity for stable throughput.
   \item Standardized healthcare onboarding by building DXP pipelines ingesting flat files, CCD XML, HL7 messages, and Kafka streams into partitioned Hive Parquet datasets.
   \item Improved data quality and reliability through ingestion validation, Airflow orchestration, and Python/Angular controls for client scheduling and source formats.
-  \item Delivered MTD/YTD analytics pipelines across 26M+ members on large Hive/Spark clusters; used single-query Hive for straightforward workloads and spearheaded PySpark jobs for complex transformations, tuning memory by queue and node capacity for stable throughput.
   \item Reduced near-real-time data SLA from 6 hours to 10 minutes by designing and deploying Kafka-based streaming pipelines.
   \item Reduced infrastructure cost and production downtime by migrating core services to Kubernetes.
-  \item Improved incident detection and recovery by implementing Grafana and Prometheus monitoring/alerting for mission-critical workflows.
+  \item Implemented Grafana/Prometheus monitoring/alerting to improve incident detection and recovery.
 \end{itemize}
 
 \vspace{0pt}
@@ -114,9 +115,9 @@ Data Engineer with 4+ years building scalable ETL, real-time streaming, and clou
 \textbf{Media Magic} (\href{https://media-magic.umangshah.me}{Live Demo}) \hfill \textit{Sep 2023 -- Dec 2023} \\
 \vspace{0pt}
 \begin{itemize}
-  \item Built a developer-first image delivery platform on AWS (S3 \textrightarrow{} SQS \textrightarrow{} Lambda \textrightarrow{} DynamoDB) plus SDK/CLI tooling, enabling path-based integration and sub-200ms image responses.
-  \item Improved visual consistency and processing efficiency by using OpenCV + YOLO smart-focus cropping, then adding hash-based idempotency and lease-based request coalescing to prevent duplicate transforms.
-  \item Improved delivery reliability and observability by orchestrating CloudFront-backed on-demand WebP transforms with readiness-aware retries and analytics for throughput, transform latency, and cache-hit efficiency.
+  \item Designed and developed an image optimization platform with React and Python SDKs, enabling developers to seamlessly deliver responsive, right-sized images across devices with minimal integration effort.
+  \item Built a Quick-Check page that previews performance gains from any URL before SDK integration, with results across mobile and desktop viewports.
+  \item Implemented event-driven data pipelines and per-image analytics tracking cache hit ratios, resolution distributions, load time, and transformation latency, with real-time dashboards and a developer overlay for inspecting image loading and optimization.
 \end{itemize}
 
 \textbf{Forest Fire Tracker} (\href{https://github.com/umangshah-js/forest-fire-tracker}{GitHub}) \hfill \textit{Feb 2023 -- Apr 2023} \\

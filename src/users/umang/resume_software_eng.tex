@@ -1,0 +1,262 @@
+\documentclass[letterpaper]{article}
+
+\usepackage[left=0.4722in,right=0.4722in,top=0.3938in,bottom=0.3938in]{geometry}
+\usepackage{array}
+\usepackage{calc}
+\usepackage{enumitem}
+\usepackage{fontspec}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+\usepackage{xcolor}
+
+% Use bundled Calibri fonts only (no system font lookup).
+\newcommand{\CalibriPath}{/var/task/fonts/calibri/}
+\IfFileExists{/var/task/fonts/calibri/Calibri.ttf}{}{
+  \IfFileExists{cdk/lambda/fonts/calibri/Calibri.ttf}{
+    \renewcommand{\CalibriPath}{cdk/lambda/fonts/calibri/}
+  }{
+    \renewcommand{\CalibriPath}{/usr/share/fonts/calibri/}
+  }
+}
+\setmainfont{Calibri}[
+  Path=\CalibriPath,
+  Extension=.ttf,
+  UprightFont=Calibri,
+  ItalicFont=Calibrii,
+  BoldFont=Calibri,
+  BoldItalicFont=Calibrii,
+  BoldFeatures={FakeBold=5.0}
+]
+\newfontfamily\HeadingFont{Calibri}[
+  Path=\CalibriPath,
+  Extension=.ttf,
+  UprightFont=Calibri,
+  ItalicFont=Calibrii,
+  BoldFont=Calibri,
+  BoldItalicFont=Calibrii,
+  BoldFeatures={FakeBold=5.0}
+]
+
+\hypersetup{hidelinks}
+\pagenumbering{gobble}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{0.92}
+\setlength{\emergencystretch}{1em}
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+
+\definecolor{Heading}{HTML}{111111}
+\definecolor{RuleGray}{HTML}{B7B7B7}
+\definecolor{BodyGray}{HTML}{4C4C4C}
+\definecolor{HeaderLink}{HTML}{886288}
+
+\newcommand{\NameStyle}{\HeadingFont\fontsize{26}{28}\selectfont}
+\newcommand{\SubTitleStyle}{\fontsize{9}{9}\selectfont\color{BodyGray}}
+\newcommand{\SectionStyle}{\HeadingFont\fontsize{13}{14}\selectfont\bfseries\color{Heading}}
+\newcommand{\HeadingTwoStyle}{\HeadingFont\fontsize{13}{14}\selectfont\bfseries\color{Heading}}
+\newcommand{\HeadingThreeStyle}{\HeadingFont\fontsize{11}{12}\selectfont\color{Heading}}
+\newcommand{\RoleStyle}{\HeadingFont\fontsize{11}{12}\selectfont\bfseries\color{Heading}}
+\newcommand{\BodyStyle}{\fontsize{10}{10.5}\selectfont\color{BodyGray}}
+\newcommand{\ExpHeadingShift}{\hspace*{0in}}
+% Section spacing controls
+% Slightly tighter spacing to keep single-page output.
+\newlength{\SectionTopSpace}\setlength{\SectionTopSpace}{1pt}
+\newlength{\SectionRuleGap}\setlength{\SectionRuleGap}{-5pt}
+\newlength{\SectionAfterRuleSpace}\setlength{\SectionAfterRuleSpace}{-1pt}
+
+\renewcommand{\labelitemi}{\textbullet}
+\newlength{\BulletIndent}\setlength{\BulletIndent}{0.208in}
+\newlength{\BulletLabelWidth}\setlength{\BulletLabelWidth}{0.10in}
+\newlength{\BulletLabelSep}\setlength{\BulletLabelSep}{0.10in}
+\newlength{\BulletLeftMargin}\setlength{\BulletLeftMargin}{\BulletIndent}
+% Tighten list spacing a bit.
+\newcommand{\BulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-3pt,topsep=-1pt,parsep=0pt,partopsep=0pt,align=parleft]}
+\newcommand{\SkillListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=1pt,topsep=-1pt,parsep=0pt,partopsep=0pt,align=parleft]}
+\newcommand{\BulletListEnd}{\end{itemize}}
+\newcommand{\BulletItem}[1]{\item #1}
+\newlength{\SectionIndent}\setlength{\SectionIndent}{0in}
+\newcommand{\SectionHeading}[1]{\vspace{\SectionTopSpace}\noindent\hspace*{-\SectionIndent}{\SectionStyle #1}\par\vspace{\SectionRuleGap}\noindent\hspace*{-\SectionIndent}\color{RuleGray}\rule{\dimexpr\linewidth+\SectionIndent\relax}{0.4pt}\color{Heading}\vspace{\SectionAfterRuleSpace}}
+\newcommand{\HeaderContactStyle}{\fontsize{9}{10}\selectfont\color{BodyGray}}
+\newlength{\HdrA}\setlength{\HdrA}{0.07797\textwidth}
+\newlength{\HdrB}\setlength{\HdrB}{0.41557\textwidth}
+\newlength{\HdrC}\setlength{\HdrC}{0.50646\textwidth}
+
+\newlength{\EduW}\setlength{\EduW}{\textwidth}
+\newlength{\EduA}\setlength{\EduA}{0.29583\textwidth}
+\newlength{\EduB}\setlength{\EduB}{0.38849\textwidth}
+\newlength{\EduC}\setlength{\EduC}{0.12661\textwidth}
+\newlength{\EduD}\setlength{\EduD}{0.18907\textwidth}
+
+\newlength{\ExpW}\setlength{\ExpW}{\textwidth}
+\newlength{\ExpIndent}\setlength{\ExpIndent}{0in}
+\newlength{\ExpContentW}\setlength{\ExpContentW}{\dimexpr\textwidth-\ExpIndent\relax}
+\newcommand{\ExpBulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-1pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
+\newlength{\ExpA}\setlength{\ExpA}{0.79823\ExpContentW}
+\newlength{\ExpB}\setlength{\ExpB}{0.20177\ExpContentW}
+
+\newlength{\ProjW}\setlength{\ProjW}{\textwidth}
+\newlength{\ProjIndent}\setlength{\ProjIndent}{0pt}
+\newlength{\ProjContentW}\setlength{\ProjContentW}{\dimexpr\textwidth-\ProjIndent\relax}
+\newlength{\ProjA}\setlength{\ProjA}{\ExpA}
+\newlength{\ProjB}\setlength{\ProjB}{\ExpB}
+
+\newcommand{\EduItem}[1]{\makebox[0.18in][l]{\textbullet}#1}
+\newcommand{\RightCell}[1]{\makebox[\linewidth][r]{#1}}
+
+\newcommand{\HeaderEmail}{\textcolor{HeaderLink}{\underline{\href{mailto:umangshah97@gmail.com}{umangshah97@gmail.com}}}}
+\newcommand{\HeaderContactItem}[3]{\includegraphics[width=#1]{#2}\hspace{4pt}#3}
+\newcommand{\HeaderContacts}{%
+  \HeaderContactStyle
+  \begin{tabular}[t]{@{}l@{\hspace{18pt}}l@{}}
+    \HeaderContactItem{0.11in}{media/image3.png}{+13478886757} &
+    \HeaderContactItem{0.1292in}{media/image4.png}{\href{https://www.linkedin.com/in/shah-umang-me}{/in/shah-umang-me}} \\
+    \HeaderContactItem{0.1361in}{media/image5.png}{\HeaderEmail} &
+    \HeaderContactItem{0.12in}{media/image1.png}{\href{https://github.com/umangshah-js}{/umangshah-js}} \\
+  \end{tabular}
+}
+
+\begin{document}
+
+% Header
+\noindent\begin{tabular*}{\textwidth}{@{}p{\HdrA}p{\HdrB}p{\HdrC}@{}}
+  \begin{minipage}[t]{\HdrA}
+    \vspace{0pt}
+    \includegraphics[width=0.4366in,height=0.4283in]{media/image2.png}
+  \end{minipage} &
+  \begin{minipage}[t]{\HdrB}
+    \vspace{0pt}
+    {\NameStyle UMANG  SHAH}\\[-1pt]
+    {\SubTitleStyle Software Engineer \textbar{} NYC \textbar{} \href{https://umangshah.me}{umangshah.me}}
+  \end{minipage} &
+  \begin{minipage}[t]{\HdrC}
+    \vspace{0pt}
+    \HeaderContacts
+  \end{minipage} \\
+\end{tabular*}
+
+\vspace{0pt}
+
+% Summary
+{\SectionHeading{SUMMARY}}
+\noindent{\BodyStyle\RaggedRight Software Engineer with 4+ years of experience in scalable backend systems, data platforms, and cloud-native services using Spark, Kafka, AWS, and Kubernetes across fintech and healthcare.}
+
+% Education
+{\SectionHeading{EDUCATION}}
+\noindent\begin{tabular*}{\EduW}{@{}p{\EduA}p{\EduB}>{\raggedleft\arraybackslash}p{\EduC}>{\raggedleft\arraybackslash}p{\EduD}@{}}
+  {\HeadingTwoStyle \EduItem{New York University}} & {\HeadingThreeStyle Masters of Science in Computer Science} & {\HeadingThreeStyle \mbox{GPA: 3.96/4.0}} & {\HeadingThreeStyle \mbox{Sep 22 \textendash{} May 24}} \\
+  {\HeadingTwoStyle \EduItem{VIT Chennai}} & {\HeadingThreeStyle B. Tech Computer Science and Engineering} & {\HeadingThreeStyle \mbox{GPA: 9.16/10}} & {\HeadingThreeStyle \mbox{Jul 15 \textendash{} May 19}} \\
+\end{tabular*}
+\par
+
+% Experience
+{\SectionHeading{EXPERIENCE}}
+
+\noindent\begin{tabular*}{\ExpW}{@{}p{\ExpIndent}p{\ExpA}p{\ExpB}@{}}
+  & {\ExpHeadingShift\HeadingTwoStyle Nomura Holdings America \textbar{} New York} & {\HeadingThreeStyle\RaggedLeft\RightCell{Jul 24 \textendash{} Present}} \\[-4pt]
+  & {\ExpHeadingShift\RoleStyle Analyst \textendash{} Structured Notes \textendash{} Equities (Software Engineering)} & {} \\
+\end{tabular*}
+\par
+
+\vspace{0pt}
+\begin{minipage}{\textwidth}
+  \ExpBulletListStart
+    \BulletItem{{\BodyStyle Enhanced and maintained a \textbf{15+} year .NET C\# pricing platform, delivering \textbf{67+} end-to-end features, including new payoff capabilities like buffer coupons.}}
+    \BulletItem{{\BodyStyle Designed and developed a \textbf{Spark streaming pipeline prototype} to deliver real-time tracking of trade volume and sales credit revenue across multiple dimensions using \textbf{MongoDB change streams} and \textbf{RocksDB} aggregations, with checkpointing and watermarking for fault tolerance and idempotency.}}
+    \BulletItem{{\BodyStyle Improved \textbf{request-driven} pricing pipelines and distributed compute workflows using a \textbf{hybrid REST and pub-sub architecture}, replacing manual Excel-based processes and streamlining trader operations.}}
+    \BulletItem{{\BodyStyle Increased system reliability by optimizing memory management, crash handling, and validation controls, while enabling scalable, maintainable operations and improving client experience.}}
+    \BulletItem{{\BodyStyle Automated 144A post-trade lifecycle with trade import, instrument creation, position booking, and contract generation.}}
+    \BulletItem{{\BodyStyle Integrated \textbf{Euclid}, \textbf{Radar}, and \textbf{Bloomberg} APIs to improve pricing accuracy and trade visibility.}}
+  \BulletListEnd
+\end{minipage}
+
+\vspace{3pt}
+
+\noindent\begin{tabular*}{\ExpW}{@{}p{\ExpIndent}p{\ExpA}p{\ExpB}@{}}
+  & {\ExpHeadingShift\HeadingTwoStyle MIO Partners. (McKinsey Investment Office) \textbar{} New York} & {\HeadingThreeStyle\RaggedLeft\RightCell{Jun 23 \textendash{} Aug 23}} \\[-4pt]
+  & {\ExpHeadingShift\RoleStyle Software Engineer Intern} & {} \\
+\end{tabular*}
+\par
+
+\vspace{0pt}
+\begin{minipage}{\textwidth}
+  \ExpBulletListStart
+    \BulletItem{{\BodyStyle Migrated ActiveBatch/Talend workflows to AWS Step Functions + S3, improving ETL reliability and developer velocity.}}
+  \BulletListEnd
+\end{minipage}
+
+\vspace{0pt}
+
+\noindent\begin{tabular*}{\ExpW}{@{}p{\ExpIndent}p{\ExpA}p{\ExpB}@{}}
+  & {\ExpHeadingShift\HeadingTwoStyle UnitedHealth Group \textbar{} Hyderabad, India} & {\HeadingThreeStyle\RaggedLeft\RightCell{Jul 19 \textendash{} Jul 22}} \\[-4pt]
+  & {\ExpHeadingShift\RoleStyle Senior Software Engineer (Full Stack)} & {} \\
+\end{tabular*}
+\par
+
+\vspace{0pt}
+\begin{minipage}{\textwidth}
+  \ExpBulletListStart
+    \BulletItem{{\BodyStyle Processed clinical data for \textbf{26M+} members using \textbf{Spark}, \textbf{Hive}, \textbf{HBase}, \textbf{Airflow}, and Snowflake, optimizing large-scale ETL pipelines.}}
+    \BulletItem{{\BodyStyle Developed \textbf{real-time Kafka pipelines}, reducing data SLA from 6 hours to 10 minutes.}}
+    \BulletItem{{\BodyStyle Migrated services to \textbf{Kubernetes}, decreasing application cost and downtime.}}
+    \BulletItem{{\BodyStyle Implemented \textbf{Grafana/Prometheus} monitoring/alerting to improve incident detection and recovery.}}
+  \BulletListEnd
+\end{minipage}
+
+% add a little space before next section
+\vspace{0pt}
+
+% Skills
+{\SectionHeading{SKILLS}}
+\begin{minipage}{\textwidth}
+  \SkillListStart
+    \BulletItem{{\BodyStyle \textbf{Software Engineering}: Spark, Kafka, Hive, HDFS, Snowflake, Airflow, ETL, PostgreSQL, SQL, MongoDB, HBase, Redis, KDB+}}
+    \BulletItem{{\BodyStyle \textbf{Cloud \& DevOps}: AWS, Azure, Terraform, Kubernetes, Docker, CI/CD, Jenkins, Nginx, Apache HTTPd}}
+    \BulletItem{{\BodyStyle \textbf{Web \& Backend}: Angular, Node.js, Flask, Flask-RESTful, .Net Framework, Fast API}}
+    \BulletItem{{\BodyStyle \textbf{Analytics \& ML}: Pandas, Tableau, D3.js, Charts.js, NLTK, StanfordNLP}}
+    \BulletItem{{\BodyStyle \textbf{Programming \& Version Control}: Python, JavaScript, Java, C\#, Git}}
+  \BulletListEnd
+\end{minipage}
+
+% Projects
+{\begingroup\setlength{\SectionAfterRuleSpace}{-2pt}\SectionHeading{PROJECTS}\endgroup}
+\noindent\begin{tabular*}{\ProjW}{@{}p{\ProjIndent}p{\ProjA}p{\ProjB}@{}}
+  & {\HeadingTwoStyle Media Magic} {\HeadingThreeStyle (Real-Time Media Optimization, Transformation \& Delivery)} & {\HeadingThreeStyle\RaggedLeft\RightCell{Sep 23 \textendash{} Dec 23}} \\
+\end{tabular*}
+\par
+\vspace{0pt}
+\begin{minipage}{\textwidth}
+  \ExpBulletListStart
+    \BulletItem{{\BodyStyle Designed and developed an image optimization platform with \textbf{React} and \textbf{Python} SDKs, enabling developers to seamlessly deliver responsive, right-sized images across devices with minimal integration effort.}}
+    \BulletItem{{\BodyStyle Built a Quick-Check page that previews performance gains from any URL before SDK integration, with results across mobile and desktop viewports.}}
+    \BulletItem{{\BodyStyle Implemented event-driven data pipelines and per-image analytics tracking cache hit ratios, resolution distributions, load time, and transformation latency, with real-time dashboards and a developer overlay for inspecting image loading and optimization.}}
+  \BulletListEnd
+\end{minipage}
+
+\vspace{-3pt}
+
+\noindent\begin{tabular*}{\ProjW}{@{}p{\ProjIndent}p{\ProjA}p{\ProjB}@{}}
+  & {\HeadingTwoStyle Forest Fire Tracker} {\HeadingThreeStyle (Forest-Fire Simulation, Real-Time Steaming, Analytics and Dashboard)} & {\HeadingThreeStyle\RaggedLeft\RightCell{Feb 23 \textendash{} Apr 23}} \\
+\end{tabular*}
+\par
+\begin{minipage}{\textwidth}
+  \ExpBulletListStart
+    \BulletItem{{\BodyStyle Simulated forest fire spread in \textbf{Unity Game Engine}, capturing top-down ``satellite'' image grids at each time step.}}
+    \BulletItem{{\BodyStyle Processed each image cell with \textbf{OpenCV} to identify fire locations and predict spread, creating near-real-time risk maps.}}
+    \BulletItem{{\BodyStyle Orchestrated distributed analytics using \textbf{Kafka}, \textbf{Dask}, and \textbf{Redis}, and visualized results via a \textbf{Dash dashboard}.}}
+  \BulletListEnd
+\end{minipage}
+
+% Awards
+{\SectionHeading{AWARDS}}
+\begin{minipage}{\textwidth}
+  \BulletListStart
+    \BulletItem{{\BodyStyle Won ``\textbf{Open Gov Data Hack}'' \textbf{2018} \textendash{} a national-level competition organized by NIC, Govt. of India.}}
+    \BulletItem{{\BodyStyle Won best project award in \textbf{Technical Expo'18} \textbf{VIT Chennai}.}}
+  \BulletListEnd
+\end{minipage}
+
+\end{document}
