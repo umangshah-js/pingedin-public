@@ -8,6 +8,7 @@ RUN if command -v dnf >/dev/null 2>&1; then \
         texlive-collection-xetex \
         texlive-collection-fontsrecommended \
         texlive-euenc \
+        texlive-mlmodern \
         fontconfig \
         freetype \
         && dnf clean all; \
@@ -18,6 +19,7 @@ RUN if command -v dnf >/dev/null 2>&1; then \
         texlive-collection-xetex \
         texlive-collection-fontsrecommended \
         texlive-euenc \
+        texlive-mlmodern \
         fontconfig \
         freetype \
         && yum clean all; \

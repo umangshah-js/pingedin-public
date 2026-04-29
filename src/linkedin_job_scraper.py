@@ -3,7 +3,7 @@ import time
 import re
 import json
 import traceback
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from datetime import datetime
 
 import boto3
@@ -148,6 +148,13 @@ def _render_cover_letter_tex(
 
 def _normalize_spaces(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _safe_filename_part(text: str, max_len: int = 40) -> str:
+    """Sanitize a string for use in a PDF filename (spaces → underscores, strip special chars)."""
+    cleaned = re.sub(r"[^\w\s-]", "", str(text or "")).strip()
+    cleaned = re.sub(r"[\s]+", "_", cleaned)
+    return cleaned[:max_len]
 
 
 def _extract_json_object(text: str) -> Optional[Dict[str, object]]:
@@ -410,6 +417,27 @@ class Config:
         return [kw.strip().lower() for kw in value.split(",") if kw.strip()]
 
     @staticmethod
+    def parse_search_terms(value: object) -> List[str]:
+        if isinstance(value, list):
+            raw_terms: List[str] = []
+            for item in value:
+                raw_terms.extend(str(item or "").splitlines())
+        else:
+            raw_terms = str(value or "").splitlines()
+        terms: List[str] = []
+        seen: Set[str] = set()
+        for raw in raw_terms:
+            term = str(raw or "").strip()
+            if not term:
+                continue
+            key = term.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            terms.append(term)
+        return terms
+
+    @staticmethod
     def _load_secret_token(secret_arn: str) -> Optional[str]:
         client = boto3.client("secretsmanager")
         response = client.get_secret_value(SecretId=secret_arn)
@@ -491,13 +519,18 @@ class LinkedInGuestClient:
             "Referer": "https://www.linkedin.com/jobs/",
         }
 
-    def fetch_search_page(self, start: int) -> str:
+    def fetch_search_page(self, start: int, keywords: Optional[str] = None) -> str:
+        search_keywords = str(keywords or self.config.keywords).strip() or str(self.config.keywords).strip()
+        search_keywords_lower = search_keywords.lower()
         params = {
-            "keywords": self.config.keywords,
+            "keywords": search_keywords,
             "location": self.config.location,
             "f_TPR": self.config.time_posted,
             "start": start,
         }
+        if "construction" in search_keywords_lower or "contruction" in search_keywords_lower:
+            params["f_I"] = "48"
+            print(f"Applying construction industry filter f_I=48 for keywords={search_keywords}")
         if self.config.geo_id:
             params["geoId"] = self.config.geo_id
         query = urllib.parse.urlencode(params)
@@ -832,8 +865,8 @@ def generate_resume_assets(
     job_id = job_record["jobId"]
     tmp_dir = "/tmp"
     generated_at = int(time.time())
-    out_tex = os.path.join(tmp_dir, f"custom_resume_{job_id}.tex")
-    out_pdf = os.path.join(tmp_dir, f"custom_resume_{job_id}.pdf")
+    out_tex = os.path.join(tmp_dir, f"resume_{job_id}.tex")
+    out_pdf = os.path.join(tmp_dir, f"resume_{job_id}.pdf")
     resume_skills_path = os.path.join(tmp_dir, f"resume_skills_{job_id}.json")
 
     result = None
@@ -863,11 +896,13 @@ def generate_resume_assets(
         else:
             print(f"Resume generation error for job {job_id}: {head}")
 
-    tex_key = store.key_for(job_id, "custom_resume.tex")
+    tex_key = store.key_for(job_id, "resume.tex")
     if os.path.exists(out_tex):
         store.upload_file(tex_key, out_tex, content_type="application/x-tex")
 
-    pdf_filename = f"custom_resume_{generated_at}.pdf"
+    company = job_record.get("company", "")
+    role = job_record.get("title", "")
+    pdf_filename = f"UmangShah_Resume_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
     pdf_key = store.key_for(job_id, pdf_filename)
     pdf_uploaded = False
     if result and result.get("out_pdf") and os.path.exists(out_pdf):
@@ -1105,7 +1140,7 @@ def generate_cover_letter_assets(
 
     pdf_uploaded = False
     pdf_key = ""
-    pdf_filename = f"cover_letter_{generated_at}.pdf"
+    pdf_filename = f"UmangShah_CoverLetter_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
     tex_key = store.key_for(job_id, "cover_letter.tex")
     store.upload_file(tex_key, out_tex, content_type="application/x-tex")
 
@@ -1215,180 +1250,193 @@ def run(
             print(f"Using dynamic f_TPR={client.config.time_posted} based on lastSuccessEpoch")
         else:
             print(f"Using configured f_TPR={client.config.time_posted} (no lastSuccessEpoch)")
-    start = 0
+    search_terms = Config.parse_search_terms(config.keywords)
+    if not search_terms:
+        fallback = str(config.keywords or "").strip() or "Data Engineer"
+        search_terms = [fallback]
+    print(f"Searching {len(search_terms)} role term(s): {', '.join(search_terms)}")
+    seen_job_ids: Set[str] = set()
 
-    for _page in range(config.max_pages):
-        html = client.fetch_search_page(start)
-        cards = parse_job_cards(html)
-        print(f"Parsed {len(cards)} job cards on start={start}")
-        if not cards:
-            break
+    for term in search_terms:
+        print(f"Starting LinkedIn role search for: {term}")
+        start = 0
+        for _page in range(config.max_pages):
+            html = client.fetch_search_page(start, keywords=term)
+            cards = parse_job_cards(html)
+            print(f"Parsed {len(cards)} job cards on start={start} for keywords={term}")
+            if not cards:
+                break
 
-        for card in cards:
-            stats["fetched"] += 1
-            job_id = card["jobId"]
-            existing_item = store.get(job_id)
-            existing_user_ids = list((existing_item or {}).get("userIds") or [])
-            if user_id and user_id in existing_user_ids:
-                continue
-            if not user_id and existing_item:
-                continue
+            for card in cards:
+                stats["fetched"] += 1
+                job_id = card["jobId"]
+                if job_id in seen_job_ids:
+                    continue
+                seen_job_ids.add(job_id)
 
-            description = fetch_job_description(
-                client,
-                card["url"],
-                job_id,
-                config.jd_fetch_mode,
-            )
-            time.sleep(config.request_delay)
+                existing_item = store.get(job_id)
+                existing_user_ids = list((existing_item or {}).get("userIds") or [])
+                if user_id and user_id in existing_user_ids:
+                    continue
+                if not user_id and existing_item:
+                    continue
 
-            compensation = extract_compensation(description) if description else None
-            job_record = {
-                "jobId": job_id,
-                "title": card["title"],
-                "company": card["company"],
-                "location": card["location"],
-                "url": card["url"],
-                "seenAt": int(time.time()),
-            }
-            if compensation:
-                job_record["compensation"] = compensation
-            if user_id:
-                job_record["userIds"] = [user_id]
+                description = fetch_job_description(
+                    client,
+                    card["url"],
+                    job_id,
+                    config.jd_fetch_mode,
+                )
+                time.sleep(config.request_delay)
 
-            created_new = False
-            if existing_item is None:
-                created_new = store.save(job_record)
-            elif user_id:
-                store.add_user_membership(job_id, user_id)
-                created_new = True
+                compensation = extract_compensation(description) if description else None
+                job_record = {
+                    "jobId": job_id,
+                    "title": card["title"],
+                    "company": card["company"],
+                    "location": card["location"],
+                    "url": card["url"],
+                    "seenAt": int(time.time()),
+                }
+                if compensation:
+                    job_record["compensation"] = compensation
+                if user_id:
+                    job_record["userIds"] = [user_id]
 
-            if created_new:
-                stats["new"] += 1
-                resume_assets = None
-                cleanup_keys: List[str] = []
-                jd_skills = extract_jd_skills(description) if description else []
-                try:
-                    if config.resume_auto_generate and existing_item is None:
-                        resume_assets = generate_resume_assets(
-                            config,
-                            resume_store,
-                            job_record,
-                            description,
-                        )
-                        cleanup_keys = [
-                            resume_assets.get("tex_key"),
-                            resume_assets.get("pdf_key"),
-                            resume_assets.get("resume_skills_key"),
-                            resume_assets.get("augment_result_key"),
-                            resume_assets.get("jd_key"),
-                            resume_assets.get("job_record_key"),
-                        ]
-                        if resume_assets.get("error"):
-                            cleanup_keys.append(resume_store.key_for(job_id, "resume_error.json"))
-                        resume_fields = {
-                            "resumeS3Bucket": config.resume_s3_bucket,
-                            "resumeS3Key": resume_assets["pdf_key"],
-                            "resumePdfFilename": resume_assets.get("pdf_filename", ""),
-                            "resumeGeneratedAt": resume_assets.get("generated_at", 0),
-                            "resumeTexS3Key": resume_assets["tex_key"],
-                            "resumeUrl": resume_assets.get("pdf_url", ""),
-                            "resumePdfUploaded": resume_assets.get("pdf_uploaded", False),
-                            "summaryS3Key": resume_assets.get("summary_pdf_key", ""),
-                            "summaryPdfUploaded": resume_assets.get("summary_pdf_uploaded", False),
-                            "resumeAugmentResultKey": resume_assets["augment_result_key"],
-                            "resumeSkillsKey": resume_assets["resume_skills_key"],
-                            "resumeJobDescriptionKey": resume_assets["jd_key"],
-                            "resumeJobRecordKey": resume_assets["job_record_key"],
-                            "jdSkills": jd_skills,
-                            "jdSkillsUpdatedAt": int(time.time()),
-                        }
-                        job_record.update(resume_fields)
-                        store.update_fields(job_id, resume_fields)
-                    elif existing_item is None:
-                        asset_keys = store_job_assets(resume_store, job_record, description)
-                        resume_fields = {
-                            "resumeS3Bucket": config.resume_s3_bucket,
-                            "resumeJobDescriptionKey": asset_keys["jd_key"],
-                            "resumeJobRecordKey": asset_keys["job_record_key"],
-                            "resumePdfUploaded": False,
-                            "summaryPdfUploaded": False,
-                            "jdSkills": jd_skills,
-                            "jdSkillsUpdatedAt": int(time.time()),
-                        }
-                        job_record.update(resume_fields)
-                        store.update_fields(job_id, resume_fields)
-                    else:
-                        # Existing job claimed by another user: keep JD skills fresh.
-                        store.update_fields(
-                            job_id,
-                            {
+                created_new = False
+                if existing_item is None:
+                    created_new = store.save(job_record)
+                elif user_id:
+                    store.add_user_membership(job_id, user_id)
+                    created_new = True
+
+                if created_new:
+                    stats["new"] += 1
+                    resume_assets = None
+                    cleanup_keys: List[str] = []
+                    jd_skills = extract_jd_skills(description) if description else []
+                    try:
+                        if config.resume_auto_generate and existing_item is None:
+                            resume_assets = generate_resume_assets(
+                                config,
+                                resume_store,
+                                job_record,
+                                description,
+                            )
+                            cleanup_keys = [
+                                resume_assets.get("tex_key"),
+                                resume_assets.get("pdf_key"),
+                                resume_assets.get("resume_skills_key"),
+                                resume_assets.get("augment_result_key"),
+                                resume_assets.get("jd_key"),
+                                resume_assets.get("job_record_key"),
+                            ]
+                            if resume_assets.get("error"):
+                                cleanup_keys.append(resume_store.key_for(job_id, "resume_error.json"))
+                            resume_fields = {
+                                "resumeS3Bucket": config.resume_s3_bucket,
+                                "resumeS3Key": resume_assets["pdf_key"],
+                                "resumePdfFilename": resume_assets.get("pdf_filename", ""),
+                                "resumeGeneratedAt": resume_assets.get("generated_at", 0),
+                                "resumeTexS3Key": resume_assets["tex_key"],
+                                "resumeUrl": resume_assets.get("pdf_url", ""),
+                                "resumePdfUploaded": resume_assets.get("pdf_uploaded", False),
+                                "summaryS3Key": resume_assets.get("summary_pdf_key", ""),
+                                "summaryPdfUploaded": resume_assets.get("summary_pdf_uploaded", False),
+                                "resumeAugmentResultKey": resume_assets["augment_result_key"],
+                                "resumeSkillsKey": resume_assets["resume_skills_key"],
+                                "resumeJobDescriptionKey": resume_assets["jd_key"],
+                                "resumeJobRecordKey": resume_assets["job_record_key"],
                                 "jdSkills": jd_skills,
                                 "jdSkillsUpdatedAt": int(time.time()),
-                            },
+                            }
+                            job_record.update(resume_fields)
+                            store.update_fields(job_id, resume_fields)
+                        elif existing_item is None:
+                            asset_keys = store_job_assets(resume_store, job_record, description)
+                            resume_fields = {
+                                "resumeS3Bucket": config.resume_s3_bucket,
+                                "resumeJobDescriptionKey": asset_keys["jd_key"],
+                                "resumeJobRecordKey": asset_keys["job_record_key"],
+                                "resumePdfUploaded": False,
+                                "summaryPdfUploaded": False,
+                                "jdSkills": jd_skills,
+                                "jdSkillsUpdatedAt": int(time.time()),
+                            }
+                            job_record.update(resume_fields)
+                            store.update_fields(job_id, resume_fields)
+                        else:
+                            # Existing job claimed by another user: keep JD skills fresh.
+                            store.update_fields(
+                                job_id,
+                                {
+                                    "jdSkills": jd_skills,
+                                    "jdSkillsUpdatedAt": int(time.time()),
+                                },
+                            )
+                    except Exception as exc:
+                        print(f"Resume handling failed for job {job_id}: {exc}")
+                    if notifier:
+                        title = f"{job_record['title']} @ {job_record['company']}"
+                        message = format_message(job_record)
+                        if resume_assets:
+                            short_base = os.getenv("RESUME_URL_BASE")
+                            summary_link = ""
+                            resume_link = ""
+                            if short_base and resume_assets.get("summary_pdf_uploaded"):
+                                summary_link = (
+                                    f"{short_base}?"
+                                    f"{urllib.parse.urlencode({'jobId': job_id, 'type': 'summary'})}"
+                                )
+                            if short_base and resume_assets.get("pdf_uploaded"):
+                                resume_link = (
+                                    f"{short_base}?"
+                                    f"{urllib.parse.urlencode({'jobId': job_id, 'type': 'resume'})}"
+                                )
+                            elif resume_assets.get("pdf_url"):
+                                resume_link = resume_assets["pdf_url"]
+                            if summary_link:
+                                message += (
+                                    "\n<b>Summary:</b> "
+                                    f"<a href=\"{summary_link}\">Job Summary PDF</a>"
+                                )
+                            if resume_link:
+                                message += (
+                                    "\n<b>Resume:</b> "
+                                    f"<a href=\"{resume_link}\">Custom Resume PDF</a>"
+                                )
+                        portal_url = build_portal_url(config.portal_url_base, job_id)
+                        ok = notifier.send(
+                            title=title,
+                            message=message,
+                            url=portal_url or job_record["url"],
                         )
-                except Exception as exc:
-                    print(f"Resume handling failed for job {job_id}: {exc}")
-                if notifier:
-                    title = f"{job_record['title']} @ {job_record['company']}"
-                    message = format_message(job_record)
-                    if resume_assets:
-                        short_base = os.getenv("RESUME_URL_BASE")
-                        summary_link = ""
-                        resume_link = ""
-                        if short_base and resume_assets.get("summary_pdf_uploaded"):
-                            summary_link = (
-                                f"{short_base}?"
-                                f"{urllib.parse.urlencode({'jobId': job_id, 'type': 'summary'})}"
-                            )
-                        if short_base and resume_assets.get("pdf_uploaded"):
-                            resume_link = (
-                                f"{short_base}?"
-                                f"{urllib.parse.urlencode({'jobId': job_id, 'type': 'resume'})}"
-                            )
-                        elif resume_assets.get("pdf_url"):
-                            resume_link = resume_assets["pdf_url"]
-                        if summary_link:
-                            message += (
-                                "\n<b>Summary:</b> "
-                                f"<a href=\"{summary_link}\">Job Summary PDF</a>"
-                            )
-                        if resume_link:
-                            message += (
-                                "\n<b>Resume:</b> "
-                                f"<a href=\"{resume_link}\">Custom Resume PDF</a>"
-                            )
-                    portal_url = build_portal_url(config.portal_url_base, job_id)
-                    ok = notifier.send(
-                        title=title,
-                        message=message,
-                        url=portal_url or job_record["url"],
-                    )
-                    if ok:
-                        stats["notified"] += 1
-                    else:
-                        notify_failed = True
-                        if existing_item is None:
-                            try:
-                                store.delete(job_id)
-                            except Exception as exc:
-                                print(f"Failed to delete job {job_id} after notify failure: {exc}")
-                            try:
-                                resume_store.delete_keys(cleanup_keys)
-                            except Exception as exc:
-                                print(f"Failed to delete resume assets for {job_id}: {exc}")
-                        raise RuntimeError("Pushover notification failed")
+                        if ok:
+                            stats["notified"] += 1
+                        else:
+                            notify_failed = True
+                            if existing_item is None:
+                                try:
+                                    store.delete(job_id)
+                                except Exception as exc:
+                                    print(f"Failed to delete job {job_id} after notify failure: {exc}")
+                                try:
+                                    resume_store.delete_keys(cleanup_keys)
+                                except Exception as exc:
+                                    print(f"Failed to delete resume assets for {job_id}: {exc}")
+                            raise RuntimeError("Pushover notification failed")
+                time.sleep(config.request_delay)
+
+            if len(cards) < config.page_size:
+                break
+            start += config.page_size
             time.sleep(config.request_delay)
 
-        if len(cards) < config.page_size:
-            break
-        start += config.page_size
-        time.sleep(config.request_delay)
-
     if notifier and stats["new"] == 0 and not notify_failed:
+        keyword_summary = ", ".join(search_terms)
         summary = (
             f"<b>No new jobs found</b>\n"
-            f"<b>Keywords:</b> {config.keywords}\n"
+            f"<b>Keywords:</b> {keyword_summary}\n"
             f"<b>Location:</b> {config.location}\n"
             f"<b>Window:</b> {client.config.time_posted}"
         )

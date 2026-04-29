@@ -63,16 +63,16 @@
 \newcommand{\BodyStyle}{\fontsize{10}{10.5}\selectfont\color{BodyGray}}
 \newcommand{\ExpHeadingShift}{\hspace*{0in}}
 % Section spacing controls
-\newlength{\SectionTopSpace}\setlength{\SectionTopSpace}{2pt}
-\newlength{\SectionRuleGap}\setlength{\SectionRuleGap}{-4pt}
-\newlength{\SectionAfterRuleSpace}\setlength{\SectionAfterRuleSpace}{0pt}
+\newlength{\SectionTopSpace}\setlength{\SectionTopSpace}{0pt}
+\newlength{\SectionRuleGap}\setlength{\SectionRuleGap}{-6pt}
+\newlength{\SectionAfterRuleSpace}\setlength{\SectionAfterRuleSpace}{-2pt}
 
 \renewcommand{\labelitemi}{\textbullet}
 \newlength{\BulletIndent}\setlength{\BulletIndent}{0.208in}
 \newlength{\BulletLabelWidth}\setlength{\BulletLabelWidth}{0.10in}
 \newlength{\BulletLabelSep}\setlength{\BulletLabelSep}{0.10in}
 \newlength{\BulletLeftMargin}\setlength{\BulletLeftMargin}{\BulletIndent}
-\newcommand{\BulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-2pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
+\newcommand{\BulletListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=-4pt,topsep=-2pt,parsep=0pt,partopsep=0pt,align=parleft]}
 \newcommand{\SkillListStart}{\begin{itemize}[leftmargin=\BulletLeftMargin,labelsep=\BulletLabelSep,labelwidth=\BulletLabelWidth,itemsep=2pt,topsep=0pt,parsep=0pt,partopsep=0pt,align=parleft]}
 \newcommand{\BulletListEnd}{\end{itemize}}
 \newcommand{\BulletItem}[1]{\item #1}
@@ -140,7 +140,7 @@
 
 % Summary
 {\SectionHeading{SUMMARY}}
-\noindent{\BodyStyle\RaggedRight Data Engineer with 4+ years of experience in scalable ETL, real-time streaming, and cloud-native platforms using Spark, Kafka, AWS, and Kubernetes across fintech and healthcare.}
+\noindent{\BodyStyle\justify Data Engineer with 4+ years of experience in scalable ETL, real-time streaming, and cloud-native platforms using Spark, Kafka, AWS, and Kubernetes across fintech and healthcare.}
 
 % Education
 {\SectionHeading{EDUCATION}}
@@ -162,12 +162,12 @@
 \vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
-    \BulletItem{{\BodyStyle Enhanced and maintained a \textbf{15+} year .NET C\# pricing platform, delivering \textbf{67+} end-to-end features, including new payoff capabilities like buffer coupons.}}
-    \BulletItem{{\BodyStyle Designed and developed a \textbf{Spark streaming pipeline prototype} to deliver real-time tracking of trade volume and sales credit revenue across multiple dimensions using \textbf{MongoDB change streams} and \textbf{RocksDB} aggregations, with checkpointing and watermarking for fault tolerance and idempotency.}}
-    \BulletItem{{\BodyStyle Improved \textbf{request-driven} pricing pipelines and distributed compute workflows using a \textbf{hybrid REST and pub-sub architecture}, replacing manual Excel-based processes and streamlining trader operations.}}
-    \BulletItem{{\BodyStyle Increased system reliability by optimizing memory management, crash handling, and validation controls, while enabling scalable, maintainable operations and improving client experience.}}
-    \BulletItem{{\BodyStyle Automated 144A post-trade lifecycle with trade import, instrument creation, position booking, and contract generation.}}
-    \BulletItem{{\BodyStyle Integrated \textbf{Euclid}, \textbf{Radar}, and \textbf{Bloomberg} APIs to improve pricing accuracy and trade visibility.}}
+    \BulletItem{{\BodyStyle Delivered \textbf{60+} core features on a enterprise .NET (C\#) pricing platform by modernizing pricing logic \& trade workflows.}}
+    \BulletItem{{\BodyStyle Designed and prototyped a real-time \textbf{Spark Streaming} pipeline to track trade volume and revenue across multiple dimensions, ensuring reliability with fault-tolerant features such as checkpointing and watermarking.}}
+    \BulletItem{{\BodyStyle Implemented a fast estimation feature to provide instant pricing approximations for incoming trades, reducing decision-making time for traders before final calculations.}}
+    \BulletItem{{\BodyStyle Implemented automated pipelines to replace Excel-based processes, reducing manual effort for traders.}}
+    \BulletItem{{\BodyStyle Automated post-trade workflows, including trade ingestion, data creation, position tracking, and contract generation, allowing traders and sales teams to complete compliance checks faster and more reliably.}}
+    \BulletItem{{\BodyStyle Implemented trade booking across internal \& external systems (e.g., Radar, Bloomberg APIs) enabling risk management \& trade visibility.}}
   \BulletListEnd
 \end{minipage}
 
@@ -182,7 +182,7 @@
 \vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
-    \BulletItem{{\BodyStyle Migrated ActiveBatch/Talend workflows to AWS Step Functions + S3, improving ETL reliability and developer velocity.}}
+    \BulletItem{{\BodyStyle Migrated ETL workflows from ActiveBatch + EBS to Step Functions + S3, improving reliability \& reducing cost.}}
   \BulletListEnd
 \end{minipage}
 
@@ -197,10 +197,12 @@
 \vspace{0pt}
 \begin{minipage}{\textwidth}
   \ExpBulletListStart
-    \BulletItem{{\BodyStyle Processed clinical data for \textbf{26M+} members using \textbf{Spark}, \textbf{Hive}, \textbf{HBase}, \textbf{Airflow}, and Snowflake, optimizing large-scale ETL pipelines.}}
-    \BulletItem{{\BodyStyle Developed \textbf{real-time Kafka pipelines}, reducing data SLA from 6 hours to 10 minutes.}}
-    \BulletItem{{\BodyStyle Migrated services to \textbf{Kubernetes}, decreasing application cost and downtime.}}
-    \BulletItem{{\BodyStyle Implemented \textbf{Grafana/Prometheus} monitoring/alerting to improve incident detection and recovery.}}
+    \BulletItem{{\BodyStyle Delivered MTD/YTD analytics pipelines for \textbf{26M+} members on large \textbf{Hive}/\textbf{Spark} clusters, leveraged Hive and \textbf{PySpark} for transformations of varying complexity, optimizing cluster resources to ensure stable, high-throughput processing.}}
+    \BulletItem{{\BodyStyle Reduced near-real-time data SLA from 6 hours to 10 minutes by designing and deploying \textbf{Kafka-based} streaming pipelines, enabling faster insights for business stakeholders.}}
+    \BulletItem{{\BodyStyle Standardized healthcare provider onboarding by building pipelines to ingest flat files, CCD XML, HL7 messages, and \textbf{Kafka} streams into partitioned \textbf{Hive Parquet} datasets, reducing onboarding errors and processing time.}}
+    \BulletItem{{\BodyStyle Improved data quality and reliability through ingestion validation, workflow orchestration, and client scheduling controls, minimizing downstream data errors and delays.}}
+    \BulletItem{{\BodyStyle Reduced infrastructure cost and production downtime by migrating core services to \textbf{Kubernetes}.}}
+    \BulletItem{{\BodyStyle Enabled monitoring \& alerting with Grafana \& Prometheus, accelerating incident detection \& downtime prevention.}}
   \BulletListEnd
 \end{minipage}
 

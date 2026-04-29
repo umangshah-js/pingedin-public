@@ -1,0 +1,5 @@
+{
+  "apiBase": "https://your-portal-api-lambda-url.lambda-url.us-east-1.on.aws",
+  "cognitoRegion": "us-east-1",
+  "cognitoClientId": "your-cognito-app-client-id"
+}

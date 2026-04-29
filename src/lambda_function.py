@@ -130,6 +130,7 @@ def handler(event, context):
     if user_profiles:
         aggregate = {"fetched": 0, "new": 0, "notified": 0}
         per_user = {}
+        per_user_errors = {}
         for profile_user_id, profile in enabled_profiles:
             user_config = Config()
             profile_user_key = str(profile.get("notificationUserKey") or "").strip()
@@ -139,13 +140,19 @@ def handler(event, context):
                     user_key=profile_user_key,
                     app_token=user_config.pushover_app_token,
                 )
-            user_stats = run(
-                user_config,
-                table,
-                profile_notifier,
-                user_id=profile_user_id,
-                user_profile=profile,
-            )
+            try:
+                user_stats = run(
+                    user_config,
+                    table,
+                    profile_notifier,
+                    user_id=profile_user_id,
+                    user_profile=profile,
+                )
+            except Exception as exc:
+                username = str(profile.get("username") or "").strip()
+                print(f"User run failed for userId={profile_user_id} username={username}: {exc}")
+                per_user_errors[profile_user_id] = str(exc)
+                continue
             per_user[profile_user_id] = user_stats
             for key in aggregate.keys():
                 aggregate[key] += int(user_stats.get(key, 0))
@@ -154,6 +161,7 @@ def handler(event, context):
     else:
         stats = run(config, table, default_notifier)
         per_user = {}
+        per_user_errors = {}
         mode = "global"
 
     return {
@@ -164,6 +172,7 @@ def handler(event, context):
         "profiles": len(user_profiles),
         "stats": stats,
         "perUser": per_user,
+        "perUserErrors": per_user_errors,
     }
 
 

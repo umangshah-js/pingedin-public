@@ -300,7 +300,7 @@ textarea:focus {
 }
 
 .switch-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 9px;
   margin-top: 12px;
@@ -361,6 +361,19 @@ textarea:focus {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.row-compact {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.row-compact button {
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .action-row {
@@ -427,6 +440,7 @@ li {
 
 @media (max-width: 720px) {
   .row,
+  .row-compact,
   .pager-buttons,
   .settings-grid,
   .time-range-row {

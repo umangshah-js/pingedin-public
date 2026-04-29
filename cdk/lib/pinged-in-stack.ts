@@ -170,6 +170,7 @@ export class PingedInStack extends cdk.Stack {
     portalApi.addToRolePolicy(new iam.PolicyStatement({
       actions: [
         'cognito-idp:AdminCreateUser',
+        'cognito-idp:AdminDeleteUser',
         'cognito-idp:AdminSetUserPassword',
         'cognito-idp:AdminGetUser',
       ],

@@ -175,7 +175,7 @@ function Header({ hasSession, onLogout, isAdmin }) {
       {hasSession ? (
         <div className="topbar-actions">
           <Link className="link-btn" to="/jobs">Jobs</Link>
-          <Link className="link-btn" to="/filters">Filters</Link>
+          <Link className="link-btn" to="/filters">Preferences</Link>
           {isAdmin ? <Link className="link-btn" to="/admin">Admin</Link> : null}
           <button className="btn-ghost" onClick={onLogout}>Sign Out</button>
         </div>
@@ -267,6 +267,8 @@ function LoginPage({ auth, setStatus }) {
   );
 }
 
+const DEFAULT_RECRUITER_TEMPLATE = "";
+
 function UserSettingsCard({ auth, setStatus }) {
   const commonTimezones = [
     "America/New_York",
@@ -290,9 +292,16 @@ function UserSettingsCard({ auth, setStatus }) {
     scheduleTimezone: "America/New_York",
     scheduleStart: "09:00",
     scheduleEnd: "17:00",
+    linkedInUrl: "",
+    portfolioUrl: "",
+    recruiterMessageTemplate: DEFAULT_RECRUITER_TEMPLATE,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -315,6 +324,9 @@ function UserSettingsCard({ auth, setStatus }) {
           scheduleTimezone: next.scheduleTimezone || "America/New_York",
           scheduleStart: next.scheduleStart || "09:00",
           scheduleEnd: next.scheduleEnd || "17:00",
+          linkedInUrl: next.linkedInUrl || "",
+          portfolioUrl: next.portfolioUrl || "",
+          recruiterMessageTemplate: next.recruiterMessageTemplate || DEFAULT_RECRUITER_TEMPLATE,
         });
       } catch (err) {
         setStatus(`Failed to load filters (${err})`, true);
@@ -368,10 +380,13 @@ function UserSettingsCard({ auth, setStatus }) {
           keywords: settings.keywords.trim(),
           location: settings.location.trim(),
           enabled: settings.enabled,
-          scheduleEnabled: settings.scheduleEnabled,
+          scheduleEnabled: true,
           scheduleTimezone: settings.scheduleTimezone.trim(),
           scheduleStart: settings.scheduleStart,
           scheduleEnd: settings.scheduleEnd,
+          linkedInUrl: settings.linkedInUrl.trim(),
+          portfolioUrl: settings.portfolioUrl.trim(),
+          recruiterMessageTemplate: settings.recruiterMessageTemplate,
         }),
       });
       if (!res.ok) {
@@ -386,21 +401,65 @@ function UserSettingsCard({ auth, setStatus }) {
     }
   };
 
+  const changePassword = async () => {
+    const current = currentPassword;
+    const next = newPassword;
+    const confirm = confirmNewPassword;
+    if (!current || !next || !confirm) {
+      setStatus("Please fill current password, new password, and confirmation.", true);
+      return;
+    }
+    if (next !== confirm) {
+      setStatus("New password and confirmation do not match.", true);
+      return;
+    }
+    if (current === next) {
+      setStatus("New password must be different from current password.", true);
+      return;
+    }
+    setChangingPassword(true);
+    setStatus("Changing password...", false);
+    try {
+      const res = await auth.apiFetch("/user/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: current,
+          newPassword: next,
+        }),
+      });
+      if (!res.ok) {
+        setStatus(`Failed to change password (${res.status}) ${await res.text()}`, true);
+        return;
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setStatus("Password changed.", false);
+    } catch (err) {
+      setStatus(`Failed to change password (${err})`, true);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="card">
-      <div className="jobs-header">
-        <div>
-          <div className="section-title">Your Filters</div>
-          <div className="muted">These filters are used for your scheduled pulls.</div>
-        </div>
-      </div>
-      {loading ? <div className="muted">Loading filters...</div> : null}
+      <div className="section-title">Preferences</div>
+      {loading ? <div className="muted" style={{ marginTop: 8 }}>Loading...</div> : null}
       {!loading ? (
         <>
-          <div className="settings-grid">
+          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>JOB ALERTS</div>
+          <div className="settings-grid" style={{ marginTop: 6 }}>
             <div>
-              <div className="label">Keywords</div>
-              <input value={settings.keywords} onChange={(e) => onChange("keywords", e.target.value)} />
+              <div className="label">Roles / Keywords</div>
+              <textarea
+                rows={3}
+                value={settings.keywords}
+                onChange={(e) => onChange("keywords", e.target.value)}
+                placeholder={"Data Engineer\nSoftware Engineer\nML Engineer"}
+              />
+              <div className="muted">Split roles by new lines only.</div>
             </div>
             <div>
               <div className="label">Location</div>
@@ -408,54 +467,114 @@ function UserSettingsCard({ auth, setStatus }) {
             </div>
           </div>
           <label className="switch-row">
-            <input
-              type="checkbox"
-              checked={settings.enabled}
-              onChange={(e) => onChange("enabled", e.target.checked)}
-            />
-            <span>Enable scheduled pulls for this account</span>
+            <input type="checkbox" checked={settings.enabled} onChange={(e) => onChange("enabled", e.target.checked)} />
+            <span>Receive job alerts</span>
           </label>
-          <label className="switch-row">
-            <input
-              type="checkbox"
-              checked={settings.scheduleEnabled}
-              onChange={(e) => onChange("scheduleEnabled", e.target.checked)}
-            />
-            <span>Use active schedule window</span>
-          </label>
-          {settings.scheduleEnabled ? (
-            <div className="settings-grid">
-              <div>
-                <div className="label">Timezone (IANA)</div>
-                <select
-                  value={settings.scheduleTimezone}
-                  onChange={(e) => onChange("scheduleTimezone", e.target.value)}
-                >
-                  {commonTimezones.map((tz) => (
-                    <option key={tz} value={tz}>{tz}</option>
-                  ))}
-                </select>
+          <div className="settings-grid" style={{ marginTop: 8 }}>
+            <div>
+              <div className="label">Timezone (IANA)</div>
+              <select value={settings.scheduleTimezone} onChange={(e) => onChange("scheduleTimezone", e.target.value)}>
+                {commonTimezones.map((tz) => (
+                  <option key={tz} value={tz}>{tz}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className="label">Active Hours</div>
+              <div className="time-range-row">
+                <input type="time" value={settings.scheduleStart} onChange={(e) => onChange("scheduleStart", e.target.value)} />
+                <input type="time" value={settings.scheduleEnd} onChange={(e) => onChange("scheduleEnd", e.target.value)} />
               </div>
-              <div>
-                <div className="label">Start / End</div>
-                <div className="time-range-row">
-                  <input type="time" value={settings.scheduleStart} onChange={(e) => onChange("scheduleStart", e.target.value)} />
-                  <input type="time" value={settings.scheduleEnd} onChange={(e) => onChange("scheduleEnd", e.target.value)} />
-                </div>
-                <div className="muted">
-                  Max 14 hours. Current: {(() => {
-                    const duration = scheduleDurationMinutes();
-                    if (duration === null) return "invalid";
-                    const h = Math.floor(duration / 60);
-                    const m = duration % 60;
-                    return `${h}h ${m}m`;
-                  })()}
-                </div>
+              <div className="muted">
+                Current: {(() => {
+                  const duration = scheduleDurationMinutes();
+                  if (duration === null) return "invalid";
+                  const h = Math.floor(duration / 60);
+                  const m = duration % 60;
+                  return `${h}h ${m}m`;
+                })()}
               </div>
             </div>
-          ) : null}
-          <div className="buttons">
-            <button className="btn-primary" disabled={saving} onClick={saveSettings}>Save Filters</button>
+          </div>
+
+          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
+          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>PROFILE</div>
+          <div className="settings-grid" style={{ marginTop: 6 }}>
+            <div>
+              <div className="label">LinkedIn Profile URL</div>
+              <input
+                value={settings.linkedInUrl}
+                onChange={(e) => onChange("linkedInUrl", e.target.value)}
+                placeholder="https://www.linkedin.com/in/your-profile"
+              />
+            </div>
+            <div>
+              <div className="label">Portfolio URL</div>
+              <input
+                value={settings.portfolioUrl}
+                onChange={(e) => onChange("portfolioUrl", e.target.value)}
+                placeholder="https://yourportfolio.com"
+              />
+            </div>
+          </div>
+
+          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
+          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>RECRUITER MESSAGE</div>
+          <div className="muted" style={{ marginTop: 4, marginBottom: 6 }}>Use <code>{"{company_name}"}</code> and <code>{"{position}"}</code> as placeholders.</div>
+          <textarea
+            rows={12}
+            value={settings.recruiterMessageTemplate}
+            onChange={(e) => onChange("recruiterMessageTemplate", e.target.value)}
+          />
+
+          <div style={{ marginTop: 16 }}>
+            <button className="btn-primary" disabled={saving} onClick={saveSettings}>Save Preferences</button>
+          </div>
+          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
+          <div style={{ marginTop: 16 }}>
+            <div className="section-title">Change Password</div>
+            <div className="muted">Use your current password to set a new one.</div>
+            <div className="settings-grid" style={{ marginTop: 8 }}>
+              <div>
+                <div className="label">Current Password</div>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  disabled={changingPassword}
+                />
+              </div>
+              <div>
+                <div className="label">New Password</div>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={changingPassword}
+                />
+              </div>
+              <div>
+                <div className="label">Confirm New Password</div>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={changingPassword}
+                />
+              </div>
+            </div>
+            <div className="buttons">
+              <button
+                className="btn-primary"
+                disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                onClick={changePassword}
+              >
+                {changingPassword ? "Changing..." : "Change Password"}
+              </button>
+            </div>
           </div>
         </>
       ) : null}
@@ -486,12 +605,10 @@ function JobsPage({ auth, setStatus }) {
     return <Navigate to={`/jobs/${encodeURIComponent(requestedJobId)}${suffix}`} replace />;
   }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setJobSearchQuery(jobSearchInput.trim());
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [jobSearchInput]);
+  const commitSearch = () => {
+    setJobSearchQuery(jobSearchInput.trim());
+    setPageIndex(0);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -575,18 +692,19 @@ function JobsPage({ auth, setStatus }) {
           <div className="pill">{totalCount} total</div>
         </div>
         <div className="label">Search Jobs</div>
-        <div className="row">
+        <div className="row-compact">
           <input
             value={jobSearchInput}
-            onChange={(e) => {
-              setJobSearchInput(e.target.value);
-              setPageIndex(0);
-            }}
+            onChange={(e) => setJobSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") commitSearch(); }}
             placeholder="Search by title, company, location, compensation, or job ID"
           />
+          <button className="btn-primary" onClick={commitSearch}>
+            Search
+          </button>
           <button
             className="btn-ghost"
-            disabled={!jobSearchInput.trim()}
+            disabled={!jobSearchInput.trim() && !jobSearchQuery}
             onClick={() => {
               setJobSearchInput("");
               setJobSearchQuery("");
@@ -598,7 +716,7 @@ function JobsPage({ auth, setStatus }) {
         </div>
         {jobSearchQuery ? <div className="muted">Searching for "{jobSearchQuery}"</div> : null}
         <div className="label">Add Job by URL</div>
-        <div className="row">
+        <div className="row-compact">
           <input
             value={newJobUrl}
             onChange={(e) => setNewJobUrl(e.target.value)}
@@ -887,6 +1005,9 @@ function JobDetailsPage({ auth, setStatus }) {
   const [generatingResume, setGeneratingResume] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [selectedResumeTemplate, setSelectedResumeTemplate] = useState("resume.tex");
+  const [editingCompany, setEditingCompany] = useState(false);
+  const [companyInput, setCompanyInput] = useState("");
+  const [savingCompany, setSavingCompany] = useState(false);
 
   const loadJob = async () => {
     setLoading(true);
@@ -919,6 +1040,67 @@ function JobDetailsPage({ auth, setStatus }) {
 
   const resumeUrl = payload?.resumeUrl || payload?.job?.resumeUrl || "";
   const coverLetterUrl = payload?.coverLetterUrl || payload?.job?.coverLetterUrl || "";
+  const linkedInUrl = payload?.linkedInUrl || "";
+  const portfolioUrl = payload?.portfolioUrl || "";
+
+  const applyToJob = async () => {
+    const parts = [portfolioUrl, linkedInUrl].filter(Boolean);
+    for (const url of parts) {
+      try { await navigator.clipboard.writeText(url); } catch (_) {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (job.url) window.open(job.url, "_blank");
+  };
+  const coverLetterText = payload?.coverLetterText || "";
+  const [copyingCoverLetter, setCopyingCoverLetter] = useState(false);
+
+  const copyCoverLetterText = async () => {
+    if (!coverLetterText) return;
+    setCopyingCoverLetter(true);
+    try {
+      await navigator.clipboard.writeText(coverLetterText);
+      setStatus("Cover letter text copied to clipboard.", false);
+    } catch (err) {
+      setStatus(`Failed to copy cover letter text: ${err}`, true);
+    } finally {
+      setCopyingCoverLetter(false);
+    }
+  };
+
+  const copyRecruiterMessage = async () => {
+    const template = payload?.recruiterMessageTemplate || DEFAULT_RECRUITER_TEMPLATE;
+    const message = template
+      .replace(/\{company_name\}/g, job.company || "")
+      .replace(/\{position\}/g, job.title || "");
+    try {
+      await navigator.clipboard.writeText(message);
+      setStatus("Recruiter message copied to clipboard.", false);
+    } catch (err) {
+      setStatus(`Failed to copy message: ${err}`, true);
+    }
+  };
+
+  const saveCompany = async () => {
+    setSavingCompany(true);
+    try {
+      const res = await auth.apiFetch(`/job/update?jobId=${encodeURIComponent(jobId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company: companyInput.trim() }),
+      });
+      if (!res.ok) {
+        setStatus(`Failed to update company (${res.status})`, true);
+        return;
+      }
+      setEditingCompany(false);
+      await loadJob();
+      setStatus("Company name updated.", false);
+    } catch (err) {
+      setStatus(`Failed to update company: ${err}`, true);
+    } finally {
+      setSavingCompany(false);
+    }
+  };
 
   const generateResume = async () => {
     setGeneratingResume(true);
@@ -999,7 +1181,7 @@ function JobDetailsPage({ auth, setStatus }) {
             <div className="value">{job.title || ""}</div>
           </div>
           {job.url ? (
-            <a className="link-btn" href={job.url} target="_blank" rel="noreferrer">View Job</a>
+            <button className="btn-primary" onClick={applyToJob}>Apply</button>
           ) : null}
         </div>
         <div className="grid">
@@ -1009,7 +1191,24 @@ function JobDetailsPage({ auth, setStatus }) {
           </div>
           <div>
             <div className="label">Company</div>
-            <div className="value">{job.company || ""}</div>
+            {editingCompany ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                <input
+                  style={{ width: "auto", flex: 1, padding: "6px 10px", fontSize: 14 }}
+                  value={companyInput}
+                  onChange={(e) => setCompanyInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveCompany(); if (e.key === "Escape") setEditingCompany(false); }}
+                  autoFocus
+                />
+                <button className="btn-primary" style={{ padding: "6px 10px", fontSize: 13 }} disabled={savingCompany || !companyInput.trim()} onClick={saveCompany}>Save</button>
+                <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 13 }} onClick={() => setEditingCompany(false)}>Cancel</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <div className="value">{job.company || ""}</div>
+                <button className="btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => { setCompanyInput(job.company || ""); setEditingCompany(true); }}>Edit</button>
+              </div>
+            )}
           </div>
           <div>
             <div className="label">Location</div>
@@ -1037,8 +1236,18 @@ function JobDetailsPage({ auth, setStatus }) {
             {hasCoverLetter ? (
               <button className="btn-ghost" onClick={() => window.open(coverLetterUrl, "_blank")}>View Cover Letter</button>
             ) : null}
+            {hasCoverLetter && coverLetterText ? (
+              <button className="btn-ghost" disabled={copyingCoverLetter} onClick={copyCoverLetterText}>
+                {copyingCoverLetter ? "Copying..." : "Copy Cover Letter Text"}
+              </button>
+            ) : null}
           </div>
         ) : null}
+        <div className="row action-row">
+          {payload?.recruiterMessageTemplate ? (
+            <button className="btn-ghost" onClick={copyRecruiterMessage}>Copy Recruiter Message</button>
+          ) : null}
+        </div>
         {hasCoverLetter && organizationMission ? (
           <div style={{ marginTop: 12 }}>
             <div className="label">Organization Mission</div>

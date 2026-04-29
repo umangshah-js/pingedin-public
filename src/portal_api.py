@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 import hashlib
 import urllib.parse
@@ -15,6 +16,7 @@ from augment_resume_from_jd import (
     fetch_url_text,
     fetch_url_text_selenium,
     extract_linkedin_job_id,
+    fetch_linkedin_guest_html,
     extract_description_from_html as jd_extract_description_from_html,
     extract_description as jd_extract_description_text,
 )
@@ -149,15 +151,29 @@ def _user_profile_key(user_id: str) -> str:
 
 
 def _normalize_role_keywords(value: Any, fallback: str) -> list[str]:
-    if isinstance(value, list):
-        result = [str(v).strip().lower() for v in value if str(v).strip()]
-        if result:
-            return result
-    if isinstance(value, str):
-        result = [kw.strip().lower() for kw in value.split(",") if kw.strip()]
-        if result:
-            return result
-    return [kw.strip().lower() for kw in fallback.split(",") if kw.strip()]
+    source: Any = value
+    if source is None:
+        source = fallback
+    if isinstance(source, list):
+        raw_terms: list[str] = []
+        for item in source:
+            raw_terms.extend(str(item or "").splitlines())
+    else:
+        raw_terms = str(source or "").splitlines()
+    result: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_terms:
+        term = str(raw or "").strip()
+        if not term:
+            continue
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(term)
+    if result:
+        return result
+    return [kw.strip() for kw in str(fallback or "").splitlines() if kw.strip()]
 
 
 def _parse_bool(value: Any, default: bool) -> bool:
@@ -342,6 +358,30 @@ def _load_s3_text(s3, bucket: str, key: str) -> str:
     return obj["Body"].read().decode("utf-8", errors="replace")
 
 
+def _tex_to_plain_text(tex: str) -> str:
+    """Extract plain text from a cover letter .tex file, preserving paragraph breaks."""
+    import re as _re
+    # Keep only the document body
+    body = _re.sub(r"[\s\S]*?\\begin\{document\}", "", tex)
+    body = _re.sub(r"\\end\{document\}[\s\S]*", "", body)
+    # Strip known structural commands
+    body = _re.sub(r"\\(pagestyle|usepackage|setlength|documentclass|noindent)\b(\{[^}]*\})*", "", body)
+    body = _re.sub(r"\\(par|noindent)\b", "", body)
+    body = _re.sub(r"\\vspace\{[^}]*\}", "", body)
+    # Unwrap common formatting commands
+    body = _re.sub(r"\\textbf\{([^}]*)\}", r"\1", body)
+    body = _re.sub(r"\\textit\{([^}]*)\}", r"\1", body)
+    body = _re.sub(r"\\emph\{([^}]*)\}", r"\1", body)
+    # Strip line-break markers
+    body = body.replace(r"\\", "")
+    # Strip remaining LaTeX commands and braces
+    body = _re.sub(r"\\[a-zA-Z]+\*?(\{[^}]*\})*", "", body)
+    body = body.replace("{", "").replace("}", "")
+    # Normalise whitespace: collapse 3+ newlines → paragraph break
+    body = _re.sub(r"\n{3,}", "\n\n", body)
+    return body.strip()
+
+
 def _derive_job_id_from_url(url: str) -> str:
     raw = str(url or "").strip()
     if not raw:
@@ -395,18 +435,75 @@ def _fetch_description_from_url(url: str, fetch_mode: str) -> str:
     return desc.strip()
 
 
+def _strip_html_tags(text: str) -> str:
+    return re.sub(r"<[^>]+>", " ", text).strip()
+
+
+def _parse_job_metadata_from_html(html: str) -> Dict[str, str]:
+    """Extract title, company, location from a job page HTML. Returns empty strings on miss."""
+    result: Dict[str, str] = {"title": "", "company": "", "location": ""}
+    if not html:
+        return result
+    # Try JSON-LD first (full job pages)
+    blocks = re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.S | re.I)
+    for block in blocks:
+        try:
+            data = json.loads(block.strip())
+        except Exception:
+            continue
+        if isinstance(data, list):
+            data = next((d for d in data if isinstance(d, dict) and d.get("@type") == "JobPosting"), None)
+        if not isinstance(data, dict) or data.get("@type") != "JobPosting":
+            continue
+        result["title"] = str(data.get("title") or "").strip()
+        org = data.get("hiringOrganization") or {}
+        result["company"] = str(org.get("name") or "").strip() if isinstance(org, dict) else ""
+        loc = data.get("jobLocation")
+        if isinstance(loc, list):
+            loc = loc[0] if loc else None
+        if isinstance(loc, dict):
+            addr = loc.get("address") or {}
+            if isinstance(addr, dict):
+                city = str(addr.get("addressLocality") or "").strip()
+                region = str(addr.get("addressRegion") or "").strip()
+                result["location"] = ", ".join(filter(None, [city, region]))
+        if result["title"] or result["company"]:
+            return result
+    # Fallback: LinkedIn guest API HTML fragment selectors
+    m = re.search(r'<h2[^>]*top-card-layout__title[^>]*>(.*?)</h2>', html, re.S | re.I)
+    if m:
+        result["title"] = _strip_html_tags(m.group(1))
+    m = re.search(r'<a[^>]*topcard__org-name-link[^>]*>(.*?)</a>', html, re.S | re.I)
+    if m:
+        result["company"] = _strip_html_tags(m.group(1))
+    m = re.search(r'<span[^>]*topcard__flavor--bullet[^>]*>(.*?)</span>', html, re.S | re.I)
+    if m:
+        result["location"] = _strip_html_tags(m.group(1))
+    return result
+
+
 def _build_custom_job_record(job_id: str, jd_url: str, event: Dict[str, Any], user_id: str) -> Dict[str, Any]:
     payload = _get_json_body(event)
     params = event.get("queryStringParameters") or {}
     if not isinstance(params, dict):
         params = {}
-    title = payload.get("title") or params.get("title") or "Custom Job"
-    company = payload.get("company") or params.get("company") or "(unknown)"
-    location = payload.get("location") or params.get("location") or ""
+    title = (payload.get("title") or params.get("title") or "").strip()
+    company = (payload.get("company") or params.get("company") or "").strip()
+    location = (payload.get("location") or params.get("location") or "").strip()
+    if not title or not company:
+        try:
+            li_job_id = extract_linkedin_job_id(jd_url)
+            html = fetch_linkedin_guest_html(li_job_id) if li_job_id else fetch_url_text(jd_url)
+            scraped = _parse_job_metadata_from_html(html)
+            title = title or scraped.get("title") or ""
+            company = company or scraped.get("company") or ""
+            location = location or scraped.get("location") or ""
+        except Exception as exc:
+            print(f"[add-url] metadata fetch failed for {jd_url}: {exc}")
     return {
         "jobId": job_id,
-        "title": title,
-        "company": company,
+        "title": title or "Custom Job",
+        "company": company or "(unknown)",
         "location": location,
         "url": jd_url,
         "seenAt": int(time.time()),
@@ -530,7 +627,8 @@ def _update_user_asset(table, job_id: str, attr: str, user_id: str, payload: Dic
 def handler(event, _context):
     if _get_method(event) == "OPTIONS":
         return _response(200, {"ok": True})
-    is_valid, auth_error, identity = _validate_access_token(_extract_bearer_token(event))
+    access_token = _extract_bearer_token(event)
+    is_valid, auth_error, identity = _validate_access_token(access_token)
     if not is_valid:
         return _error_response(401, auth_error)
     user_id = identity.get("userId", "").strip()
@@ -551,10 +649,12 @@ def handler(event, _context):
         and not path.endswith("/list")
         and not path.endswith("/add-url")
         and not path.endswith("/user/settings")
+        and not path.endswith("/user/change-password")
         and not path.endswith("/admin/users")
         and not path.endswith("/admin/user-token")
         and not path.endswith("/admin/test-notification")
         and not path.endswith("/admin/test-run")
+        and not path.endswith("/job/update")
     ):
         return _response(400, {"error": "Missing jobId"})
 
@@ -600,12 +700,20 @@ def handler(event, _context):
                         "scheduleTimezone": str(user_profile.get("scheduleTimezone") or "America/New_York"),
                         "scheduleStart": str(user_profile.get("scheduleStart") or "09:00"),
                         "scheduleEnd": str(user_profile.get("scheduleEnd") or "17:00"),
+                        "linkedInUrl": str(user_profile.get("linkedInUrl") or ""),
+                        "portfolioUrl": str(user_profile.get("portfolioUrl") or ""),
+                        "recruiterMessageTemplate": str(user_profile.get("recruiterMessageTemplate") or ""),
                     },
                 },
             )
         if _get_method(event) == "POST":
             payload = _get_json_body(event)
-            keywords = str(payload.get("keywords") or user_profile.get("keywords") or config.keywords).strip()
+            raw_keywords = payload.get("keywords")
+            keywords_list = _normalize_role_keywords(
+                raw_keywords,
+                str(user_profile.get("keywords") or config.keywords),
+            )
+            keywords = "\n".join(keywords_list)
             location = str(payload.get("location") or user_profile.get("location") or config.location).strip()
             enabled = _parse_bool(payload.get("enabled"), bool(user_profile.get("enabled", True)))
             schedule_enabled = _parse_bool(payload.get("scheduleEnabled"), bool(user_profile.get("scheduleEnabled", False)))
@@ -626,6 +734,9 @@ def handler(event, _context):
                     return _error_response(400, "Invalid schedule start/end")
                 if duration_mins > 14 * 60:
                     return _error_response(400, "Schedule window cannot exceed 14 hours")
+            linked_in_url = str(payload.get("linkedInUrl") or user_profile.get("linkedInUrl") or "").strip()
+            portfolio_url = str(payload.get("portfolioUrl") or user_profile.get("portfolioUrl") or "").strip()
+            recruiter_message_template = str(payload.get("recruiterMessageTemplate") if payload.get("recruiterMessageTemplate") is not None else (user_profile.get("recruiterMessageTemplate") or ""))
             update_fields = {
                 "itemType": "userProfile",
                 "userId": user_id,
@@ -638,6 +749,9 @@ def handler(event, _context):
                 "scheduleTimezone": schedule_timezone or "America/New_York",
                 "scheduleStart": schedule_start or "09:00",
                 "scheduleEnd": schedule_end or "17:00",
+                "linkedInUrl": linked_in_url,
+                "portfolioUrl": portfolio_url,
+                "recruiterMessageTemplate": recruiter_message_template,
                 "updatedAt": int(time.time()),
             }
             table.update_item(
@@ -648,6 +762,37 @@ def handler(event, _context):
             )
             return _response(200, {"ok": True, "settings": update_fields})
         return _error_response(405, "Method not allowed")
+
+    if path.endswith("/user/change-password"):
+        if _get_method(event) != "POST":
+            return _error_response(405, "Method not allowed")
+        payload = _get_json_body(event)
+        current_password = str(payload.get("currentPassword") or "")
+        new_password = str(payload.get("newPassword") or "")
+        if not current_password or not new_password:
+            return _error_response(400, "currentPassword and newPassword are required")
+        if current_password == new_password:
+            return _error_response(400, "New password must be different from current password")
+        region = os.getenv("COGNITO_REGION", "").strip()
+        if not region:
+            return _error_response(500, "Cognito is not configured")
+        try:
+            cognito = boto3.client("cognito-idp", region_name=region)
+            cognito.change_password(
+                AccessToken=access_token,
+                PreviousPassword=current_password,
+                ProposedPassword=new_password,
+            )
+        except cognito.exceptions.NotAuthorizedException:
+            return _error_response(400, "Current password is incorrect")
+        except cognito.exceptions.InvalidPasswordException as exc:
+            message = exc.response.get("Error", {}).get("Message") if hasattr(exc, "response") else ""
+            return _error_response(400, f"Password does not meet policy: {message or exc}")
+        except cognito.exceptions.LimitExceededException:
+            return _error_response(429, "Too many attempts, please try again later")
+        except Exception as exc:
+            return _error_response(500, f"Failed to change password: {exc}")
+        return _response(200, {"ok": True})
 
     if path.endswith("/admin/users"):
         if not _is_admin(identity):
@@ -676,12 +821,15 @@ def handler(event, _context):
             if not region or not user_pool_id:
                 return _error_response(500, "Cognito is not configured")
             cognito = boto3.client("cognito-idp", region_name=region)
+            user_created = False
+            user_info: Optional[Dict[str, Any]] = None
             try:
                 cognito.admin_create_user(
                     UserPoolId=user_pool_id,
                     Username=username,
                     MessageAction="SUPPRESS",
                 )
+                user_created = True
                 cognito.admin_set_user_password(
                     UserPoolId=user_pool_id,
                     Username=username,
@@ -689,13 +837,47 @@ def handler(event, _context):
                     Permanent=True,
                 )
             except cognito.exceptions.UsernameExistsException:
-                return _error_response(409, "User already exists")
+                try:
+                    user_info = cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)
+                except Exception:
+                    return _error_response(409, "User already exists")
+                existing_identity = _extract_identity(user_info)
+                existing_user_id = str(existing_identity.get("userId") or "").strip() or username
+                existing_profile = table.get_item(Key={"jobId": _user_profile_key(existing_user_id)}).get("Item")
+                if existing_profile:
+                    return _error_response(409, "User already exists")
+                try:
+                    cognito.admin_set_user_password(
+                        UserPoolId=user_pool_id,
+                        Username=username,
+                        Password=password,
+                        Permanent=True,
+                    )
+                except cognito.exceptions.InvalidPasswordException as exc:
+                    message = exc.response.get("Error", {}).get("Message") if hasattr(exc, "response") else ""
+                    return _error_response(400, f"Password does not meet policy: {message or exc}")
+                except Exception as exc:
+                    return _error_response(500, f"Failed to initialize existing user: {exc}")
+            except cognito.exceptions.InvalidPasswordException as exc:
+                if user_created:
+                    try:
+                        cognito.admin_delete_user(UserPoolId=user_pool_id, Username=username)
+                    except Exception:
+                        pass
+                message = exc.response.get("Error", {}).get("Message") if hasattr(exc, "response") else ""
+                return _error_response(400, f"Password does not meet policy: {message or exc}")
             except Exception as exc:
+                if user_created:
+                    try:
+                        cognito.admin_delete_user(UserPoolId=user_pool_id, Username=username)
+                    except Exception:
+                        pass
                 return _error_response(500, f"Failed to create user: {exc}")
-            try:
-                user_info = cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)
-            except Exception as exc:
-                return _error_response(500, f"User created but failed to fetch profile: {exc}")
+            if not user_info:
+                try:
+                    user_info = cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)
+                except Exception as exc:
+                    return _error_response(500, f"User created but failed to fetch profile: {exc}")
             created_identity = _extract_identity(user_info)
             created_user_id = str(created_identity.get("userId") or "").strip() or username
             profile_item = {
@@ -986,6 +1168,22 @@ def handler(event, _context):
     if user_id not in (item.get("userIds") or []):
         return _response(404, {"error": "Job not found"})
 
+    if path.endswith("/job/update") and _get_method(event) == "POST":
+        allowed_fields = {"company", "title"}
+        updates = {k: v for k, v in (body_payload or {}).items() if k in allowed_fields and isinstance(v, str)}
+        if not updates:
+            return _response(400, {"error": "No valid fields to update"})
+        expr_names = {f"#f{i}": k for i, k in enumerate(updates)}
+        expr_values = {f":v{i}": v for i, v in enumerate(updates.values())}
+        set_parts = [f"{n} = {v}" for n, v in zip(expr_names.keys(), expr_values.keys())]
+        table.update_item(
+            Key={"jobId": job_id},
+            UpdateExpression="SET " + ", ".join(set_parts),
+            ExpressionAttributeNames=expr_names,
+            ExpressionAttributeValues=expr_values,
+        )
+        return _response(200, {"ok": True, **updates})
+
     bucket = config.resume_s3_bucket
     prefix = config.resume_s3_prefix
     store = ResumeStore(bucket=bucket, prefix=prefix, url_expires_seconds=config.resume_url_expires_seconds)
@@ -1021,17 +1219,26 @@ def handler(event, _context):
             resume_url = ""
 
     cover_letter_url = ""
+    cover_letter_text = ""
     cover_asset = _get_user_asset(item, "coverLetterByUser", user_id)
     cover_letter_uploaded = bool(cover_asset.get("coverLetterPdfUploaded"))
     cover_letter_key = cover_asset.get("coverLetterS3Key")
+    cover_letter_tex_key = cover_asset.get("coverLetterTexS3Key")
     if not cover_letter_uploaded and _legacy_asset_visible(item, user_id, "coverLetterPdfUploaded", allow_legacy_owner):
         cover_letter_uploaded = bool(item.get("coverLetterPdfUploaded"))
         cover_letter_key = item.get("coverLetterS3Key")
+        cover_letter_tex_key = cover_letter_tex_key or item.get("coverLetterTexS3Key")
     if cover_letter_uploaded and cover_letter_key:
         try:
             cover_letter_url = store.presigned_url(cover_letter_key)
         except Exception:
             cover_letter_url = ""
+    if cover_letter_tex_key and bucket:
+        try:
+            tex = _load_s3_text(s3, bucket, cover_letter_tex_key)
+            cover_letter_text = _tex_to_plain_text(tex)
+        except Exception:
+            cover_letter_text = ""
 
     if path.endswith("/generate") and _get_method(event) == "POST":
         if not template_available:
@@ -1207,11 +1414,15 @@ def handler(event, _context):
             "selectedResumeTemplate": str(resume_asset.get("resumeTemplate") or selected_resume_template),
             "resumeTemplates": resume_templates,
             "coverLetterUrl": cover_letter_url,
+            "coverLetterText": cover_letter_text,
             "coverLetterGeneratedAt": int(cover_asset.get("coverLetterGeneratedAt") or item.get("coverLetterGeneratedAt", 0)),
             "organizationMission": organization_mission,
             "resumeExistsForUser": bool(resume_url),
             "coverLetterExistsForUser": bool(cover_letter_url),
             "templateAvailable": bool(template_available),
             "summary": summary,
+            "linkedInUrl": str(user_profile.get("linkedInUrl") or ""),
+            "portfolioUrl": str(user_profile.get("portfolioUrl") or ""),
+            "recruiterMessageTemplate": str(user_profile.get("recruiterMessageTemplate") or ""),
         },
     )
