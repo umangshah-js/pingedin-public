@@ -168,16 +168,16 @@ function ProtectedRoute({ hasSession, children }) {
 
 function Header({ hasSession, onLogout, isAdmin }) {
   return (
-    <header className="card topbar">
+    <header className="bg-zinc-800 border-b border-zinc-700 rounded-2xl p-5 shadow-xl flex items-start justify-between gap-3 mt-1 mb-6">
       <div>
         <h1>PingedIn Portal</h1>
       </div>
       {hasSession ? (
-        <div className="topbar-actions">
-          <Link className="link-btn" to="/jobs">Jobs</Link>
-          <Link className="link-btn" to="/filters">Preferences</Link>
-          {isAdmin ? <Link className="link-btn" to="/admin">Admin</Link> : null}
-          <button className="btn-ghost" onClick={onLogout}>Sign Out</button>
+        <div className="flex flex-wrap gap-2.5 min-w-0 justify-end">
+          <Link className="inline-flex items-center justify-center px-3 py-2 border border-zinc-700 bg-transparent text-zinc-300 no-underline hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm" to="/jobs">Jobs</Link>
+          <Link className="inline-flex items-center justify-center px-3 py-2 border border-zinc-700 bg-transparent text-zinc-300 no-underline hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm" to="/filters">Preferences</Link>
+          {isAdmin ? <Link className="inline-flex items-center justify-center px-3 py-2 border border-zinc-700 bg-transparent text-zinc-300 no-underline hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm" to="/admin">Admin</Link> : null}
+          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" onClick={onLogout}>Sign Out</button>
         </div>
       ) : null}
     </header>
@@ -186,9 +186,9 @@ function Header({ hasSession, onLogout, isAdmin }) {
 
 function InlineLoader({ label = "Loading..." }) {
   return (
-    <div className="loader-wrap">
-      <div className="loader-spinner" />
-      <div className="muted">{label}</div>
+    <div className="min-h-32 flex flex-col gap-2.5 items-center justify-center">
+      <div className="w-7 h-7 rounded-full border-4 border-amber-500/25 border-t-amber-500 animate-spin" />
+      <div className="text-zinc-400">{label}</div>
     </div>
   );
 }
@@ -226,18 +226,18 @@ function LoginPage({ auth, setStatus }) {
   };
 
   return (
-    <div className="auth-layout">
-      <div className="card auth-copy">
-        <div className="section-title">Welcome</div>
-        <h2 className="auth-title">Track jobs, tailor applications, and move quickly.</h2>
-        <p className="muted">Sign in to access saved listings, resume generation, and cover letter actions.</p>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl min-h-56">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Welcome</div>
+        <h2 className="m-0 mt-1 mb-2 text-xl sm:text-2xl leading-tight">Track jobs, tailor applications, and move quickly.</h2>
+        <p className="text-zinc-400">Sign in to access saved listings, resume generation, and cover letter actions.</p>
       </div>
-      <div className="card auth-card">
-        <div className="section-title">Sign In</div>
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Sign In</div>
         <form onSubmit={onSubmit}>
-          <div className="grid auth-fields">
+          <div className="grid gap-2.5">
             <div>
-              <div className="label">Username</div>
+              <div className="text-zinc-400 text-xs mb-1">Username</div>
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -246,7 +246,7 @@ function LoginPage({ auth, setStatus }) {
               />
             </div>
             <div>
-              <div className="label">Password</div>
+              <div className="text-zinc-400 text-xs mb-1">Password</div>
               <input
                 type="password"
                 value={password}
@@ -256,8 +256,8 @@ function LoginPage({ auth, setStatus }) {
               />
             </div>
           </div>
-          <div className="buttons">
-            <button className="btn-primary" type="submit" disabled={submitting || !username || !password}>
+          <div className="grid gap-2.5 grid-cols-1 mt-3">
+            <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" type="submit" disabled={submitting || !username || !password}>
               Sign In
             </button>
           </div>
@@ -444,35 +444,35 @@ function UserSettingsCard({ auth, setStatus }) {
   };
 
   return (
-    <div className="card">
-      <div className="section-title">Preferences</div>
-      {loading ? <div className="muted" style={{ marginTop: 8 }}>Loading...</div> : null}
+    <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl">
+      <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Preferences</div>
+      {loading ? <div className="text-zinc-400 mt-2">Loading...</div> : null}
       {!loading ? (
         <>
-          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>JOB ALERTS</div>
-          <div className="settings-grid" style={{ marginTop: 6 }}>
+          <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest mt-4">JOB ALERTS</div>
+          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
             <div>
-              <div className="label">Roles / Keywords</div>
+              <div className="text-zinc-400 text-xs mb-1">Roles / Keywords</div>
               <textarea
                 rows={3}
                 value={settings.keywords}
                 onChange={(e) => onChange("keywords", e.target.value)}
                 placeholder={"Data Engineer\nSoftware Engineer\nML Engineer"}
               />
-              <div className="muted">Split roles by new lines only.</div>
+              <div className="text-zinc-400 text-xs">Split roles by new lines only.</div>
             </div>
             <div>
-              <div className="label">Location</div>
+              <div className="text-zinc-400 text-xs mb-1">Location</div>
               <input value={settings.location} onChange={(e) => onChange("location", e.target.value)} />
             </div>
           </div>
-          <label className="switch-row">
+          <label className="flex items-center gap-2 mt-3 text-sm text-zinc-50 w-fit">
             <input type="checkbox" checked={settings.enabled} onChange={(e) => onChange("enabled", e.target.checked)} />
             <span>Receive job alerts</span>
           </label>
-          <div className="settings-grid" style={{ marginTop: 8 }}>
+          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-2">
             <div>
-              <div className="label">Timezone (IANA)</div>
+              <div className="text-zinc-400 text-xs mb-1">Timezone (IANA)</div>
               <select value={settings.scheduleTimezone} onChange={(e) => onChange("scheduleTimezone", e.target.value)}>
                 {commonTimezones.map((tz) => (
                   <option key={tz} value={tz}>{tz}</option>
@@ -480,12 +480,12 @@ function UserSettingsCard({ auth, setStatus }) {
               </select>
             </div>
             <div>
-              <div className="label">Active Hours</div>
-              <div className="time-range-row">
+              <div className="text-zinc-400 text-xs mb-1">Active Hours</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <input type="time" value={settings.scheduleStart} onChange={(e) => onChange("scheduleStart", e.target.value)} />
                 <input type="time" value={settings.scheduleEnd} onChange={(e) => onChange("scheduleEnd", e.target.value)} />
               </div>
-              <div className="muted">
+              <div className="text-zinc-400 text-xs mt-1">
                 Current: {(() => {
                   const duration = scheduleDurationMinutes();
                   if (duration === null) return "invalid";
@@ -497,11 +497,11 @@ function UserSettingsCard({ auth, setStatus }) {
             </div>
           </div>
 
-          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
-          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>PROFILE</div>
-          <div className="settings-grid" style={{ marginTop: 6 }}>
+          <hr className="border-zinc-700 my-5 mx-0" />
+          <div className="m-0 mb-1.5 text-xs font-bold text-zinc-400 uppercase tracking-widest">PROFILE</div>
+          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
             <div>
-              <div className="label">LinkedIn Profile URL</div>
+              <div className="text-zinc-400 text-xs mb-1">LinkedIn Profile URL</div>
               <input
                 value={settings.linkedInUrl}
                 onChange={(e) => onChange("linkedInUrl", e.target.value)}
@@ -509,7 +509,7 @@ function UserSettingsCard({ auth, setStatus }) {
               />
             </div>
             <div>
-              <div className="label">Portfolio URL</div>
+              <div className="text-zinc-400 text-xs mb-1">Portfolio URL</div>
               <input
                 value={settings.portfolioUrl}
                 onChange={(e) => onChange("portfolioUrl", e.target.value)}
@@ -518,25 +518,25 @@ function UserSettingsCard({ auth, setStatus }) {
             </div>
           </div>
 
-          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
-          <div className="section-title" style={{ fontSize: 13, marginTop: 16, color: "var(--muted)" }}>RECRUITER MESSAGE</div>
-          <div className="muted" style={{ marginTop: 4, marginBottom: 6 }}>Use <code>{"{company_name}"}</code> and <code>{"{position}"}</code> as placeholders.</div>
+          <hr className="border-zinc-700 my-5 mx-0" />
+          <div className="m-0 mb-1.5 text-xs font-bold text-zinc-400 uppercase tracking-widest">RECRUITER MESSAGE</div>
+          <div className="text-zinc-400 text-xs mt-1 mb-1.5">Use <code>{"{company_name}"}</code> and <code>{"{position}"}</code> as placeholders.</div>
           <textarea
             rows={12}
             value={settings.recruiterMessageTemplate}
             onChange={(e) => onChange("recruiterMessageTemplate", e.target.value)}
           />
 
-          <div style={{ marginTop: 16 }}>
-            <button className="btn-primary" disabled={saving} onClick={saveSettings}>Save Preferences</button>
+          <div className="mt-4">
+            <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={saving} onClick={saveSettings}>Save Preferences</button>
           </div>
-          <hr style={{ borderColor: "var(--line)", margin: "20px 0 0" }} />
-          <div style={{ marginTop: 16 }}>
-            <div className="section-title">Change Password</div>
-            <div className="muted">Use your current password to set a new one.</div>
-            <div className="settings-grid" style={{ marginTop: 8 }}>
+          <hr className="border-zinc-700 my-5 mx-0" />
+          <div className="mt-4">
+            <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Change Password</div>
+            <div className="text-zinc-400 text-xs">Use your current password to set a new one.</div>
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-2">
               <div>
-                <div className="label">Current Password</div>
+                <div className="text-zinc-400 text-xs mb-1">Current Password</div>
                 <input
                   type="password"
                   value={currentPassword}
@@ -546,7 +546,7 @@ function UserSettingsCard({ auth, setStatus }) {
                 />
               </div>
               <div>
-                <div className="label">New Password</div>
+                <div className="text-zinc-400 text-xs mb-1">New Password</div>
                 <input
                   type="password"
                   value={newPassword}
@@ -556,7 +556,7 @@ function UserSettingsCard({ auth, setStatus }) {
                 />
               </div>
               <div>
-                <div className="label">Confirm New Password</div>
+                <div className="text-zinc-400 text-xs mb-1">Confirm New Password</div>
                 <input
                   type="password"
                   value={confirmNewPassword}
@@ -566,9 +566,9 @@ function UserSettingsCard({ auth, setStatus }) {
                 />
               </div>
             </div>
-            <div className="buttons">
+            <div className="grid gap-2.5 grid-cols-1 mt-3">
               <button
-                className="btn-primary"
+                className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
                 onClick={changePassword}
               >
@@ -679,31 +679,32 @@ function JobsPage({ auth, setStatus }) {
   };
 
   if (loading) {
-    return <div className="card"><InlineLoader label="Loading jobs..." /></div>;
+    return <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl"><InlineLoader label="Loading jobs..." /></div>;
   }
 
   return (
-      <div className="card">
-        <div className="jobs-header">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-2">
           <div>
-            <div className="section-title">Recent Jobs</div>
-            <div className="muted">Sorted by newest seen first</div>
+            <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Recent Jobs</div>
+            <div className="text-zinc-400">Sorted by newest seen first</div>
           </div>
-          <div className="pill">{totalCount} total</div>
+          <div className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full border border-zinc-600 bg-zinc-700/50 text-xs font-semibold text-zinc-300">{totalCount} total</div>
         </div>
-        <div className="label">Search Jobs</div>
-        <div className="row-compact">
+        <div className="text-zinc-400 text-xs mb-1">Search Jobs</div>
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
           <input
             value={jobSearchInput}
             onChange={(e) => setJobSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") commitSearch(); }}
             placeholder="Search by title, company, location, compensation, or job ID"
+            className="flex-1"
           />
-          <button className="btn-primary" onClick={commitSearch}>
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" onClick={commitSearch}>
             Search
           </button>
           <button
-            className="btn-ghost"
+            className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             disabled={!jobSearchInput.trim() && !jobSearchQuery}
             onClick={() => {
               setJobSearchInput("");
@@ -714,40 +715,41 @@ function JobsPage({ auth, setStatus }) {
             Clear
           </button>
         </div>
-        {jobSearchQuery ? <div className="muted">Searching for "{jobSearchQuery}"</div> : null}
-        <div className="label">Add Job by URL</div>
-        <div className="row-compact">
+        {jobSearchQuery ? <div className="text-zinc-400 text-xs mt-2">Searching for "{jobSearchQuery}"</div> : null}
+        <div className="text-zinc-400 text-xs mb-1 mt-3">Add Job by URL</div>
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
           <input
             value={newJobUrl}
             onChange={(e) => setNewJobUrl(e.target.value)}
             placeholder="https://www.linkedin.com/jobs/view/..."
+            className="flex-1"
           />
-          <button className="btn-primary" disabled={addingJob || !newJobUrl.trim()} onClick={addJobByUrl}>
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" disabled={addingJob || !newJobUrl.trim()} onClick={addJobByUrl}>
             {addingJob ? "Adding..." : "Add Job"}
           </button>
         </div>
-        <div className="muted">Add a job link to your list and open its details.</div>
+        <div className="text-zinc-400 text-xs mt-1">Add a job link to your list and open its details.</div>
         {jobs.length === 0 ? (
-          <div className="muted">
+          <div className="text-zinc-400 mt-2">
             {jobSearchQuery ? "No jobs matched your search." : "No jobs found for this account."}
           </div>
         ) : null}
         {jobs.map((item) => (
-          <div className="job-row" key={item.jobId}>
-            <div className="value"><strong>{item.title || "Untitled"}</strong></div>
-            <div className="muted">{item.company || ""} • {item.location || ""}{item.compensation ? ` • ${item.compensation}` : ""}</div>
-            <div className="muted">{item.resumePdfUploaded ? "Resume ready" : "Resume not generated"}</div>
-            <div className="muted">{item.coverLetterPdfUploaded ? "Cover letter ready" : "Cover letter not generated"}</div>
-            <div style={{ marginTop: 8 }}>
-              <Link className="link-btn" to={`/jobs/${encodeURIComponent(item.jobId)}`}>Open Details</Link>
+          <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-3.5 mt-2.5 hover:border-zinc-600 transition-colors" key={item.jobId}>
+            <div className="text-base leading-relaxed"><strong>{item.title || "Untitled"}</strong></div>
+            <div className="text-zinc-400">{item.company || ""} • {item.location || ""}{item.compensation ? ` • ${item.compensation}` : ""}</div>
+            <div className="text-zinc-400 text-xs mt-1">{item.resumePdfUploaded ? "✓ Resume ready" : "⊘ Resume not generated"}</div>
+            <div className="text-zinc-400 text-xs">{item.coverLetterPdfUploaded ? "✓ Cover letter ready" : "⊘ Cover letter not generated"}</div>
+            <div className="mt-2">
+              <Link className="inline-flex items-center justify-center px-3 py-2 border border-zinc-700 bg-transparent text-zinc-300 no-underline hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm" to={`/jobs/${encodeURIComponent(item.jobId)}`}>Open Details</Link>
             </div>
           </div>
         ))}
-        <div className="buttons pager-buttons">
-          <button className="btn-ghost" disabled={pageIndex === 0} onClick={() => setPageIndex((x) => Math.max(0, x - 1))}>Previous</button>
-          <button className="btn-ghost" disabled={pageIndex + 1 >= totalPages} onClick={() => setPageIndex((x) => Math.min(totalPages - 1, x + 1))}>Next</button>
+        <div className="grid gap-2.5 grid-cols-2 mt-3">
+          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={pageIndex === 0} onClick={() => setPageIndex((x) => Math.max(0, x - 1))}>Previous</button>
+          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={pageIndex + 1 >= totalPages} onClick={() => setPageIndex((x) => Math.min(totalPages - 1, x + 1))}>Next</button>
         </div>
-        <div className="muted pager-text">Page {pageIndex + 1} of {totalPages}</div>
+        <div className="text-center mt-2 text-zinc-400 text-xs">Page {pageIndex + 1} of {totalPages}</div>
     </div>
   );
 }
@@ -892,38 +894,38 @@ function AdminPage({ auth, setStatus, isAdmin }) {
 
   return (
     <>
-      <div className="card">
-        <div className="section-title">Admin</div>
-        <div className="muted">Manage users and test notifications/runs.</div>
-        <div className="buttons">
-          <button className="btn-ghost" onClick={loadUsers} disabled={loading}>
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Admin</div>
+        <div className="text-zinc-400 text-xs">Manage users and test notifications/runs.</div>
+        <div className="grid gap-2.5 grid-cols-1 mt-3">
+          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" onClick={loadUsers} disabled={loading}>
             {loading ? "Refreshing..." : "Refresh Users"}
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="section-title">Create User</div>
-        <div className="settings-grid">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Create User</div>
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
           <div>
-            <div className="label">Username</div>
+            <div className="text-zinc-400 text-xs mb-1">Username</div>
             <input value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
           <div>
-            <div className="label">Password</div>
+            <div className="text-zinc-400 text-xs mb-1">Password</div>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
-        <div className="buttons">
-          <button className="btn-primary" onClick={createUser} disabled={!username.trim() || !password}>Create User</button>
+        <div className="grid gap-2.5 grid-cols-1 mt-3">
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" onClick={createUser} disabled={!username.trim() || !password}>Create User</button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="section-title">Update User Token</div>
-        <div className="settings-grid">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Update User Token</div>
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
           <div>
-            <div className="label">Username</div>
+            <div className="text-zinc-400 text-xs mb-1">Username</div>
             <select value={tokenUsername} onChange={(e) => setTokenUsername(e.target.value)}>
               <option value="">Select user</option>
               {users.map((u) => (
@@ -934,20 +936,20 @@ function AdminPage({ auth, setStatus, isAdmin }) {
             </select>
           </div>
           <div>
-            <div className="label">Notification User Key</div>
+            <div className="text-zinc-400 text-xs mb-1">Notification User Key</div>
             <input value={notificationUserKey} onChange={(e) => setNotificationUserKey(e.target.value)} />
           </div>
         </div>
-        <div className="buttons">
-          <button className="btn-primary" onClick={updateToken} disabled={!tokenUsername}>Update Token</button>
+        <div className="grid gap-2.5 grid-cols-1 mt-3">
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" onClick={updateToken} disabled={!tokenUsername}>Update Token</button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="section-title">Test Notification</div>
-        <div className="settings-grid">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Test Notification</div>
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
           <div>
-            <div className="label">Username</div>
+            <div className="text-zinc-400 text-xs mb-1">Username</div>
             <select value={testUsername} onChange={(e) => setTestUsername(e.target.value)}>
               <option value="">Select user</option>
               {users.map((u) => (
@@ -958,20 +960,20 @@ function AdminPage({ auth, setStatus, isAdmin }) {
             </select>
           </div>
           <div>
-            <div className="label">Message</div>
+            <div className="text-zinc-400 text-xs mb-1">Message</div>
             <input value={testMessage} onChange={(e) => setTestMessage(e.target.value)} />
           </div>
         </div>
-        <div className="buttons">
-          <button className="btn-primary" onClick={sendTestNotification} disabled={!testUsername}>Send Test Notification</button>
+        <div className="grid gap-2.5 grid-cols-1 mt-3">
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" onClick={sendTestNotification} disabled={!testUsername}>Send Test Notification</button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="section-title">Trigger Test Lambda Run</div>
-        <div className="settings-grid">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Trigger Test Lambda Run</div>
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mt-1.5">
           <div>
-            <div className="label">Username (optional)</div>
+            <div className="text-zinc-400 text-xs mb-1">Username (optional)</div>
             <input
               value={runUsername}
               onChange={(e) => setRunUsername(e.target.value)}
@@ -979,12 +981,12 @@ function AdminPage({ auth, setStatus, isAdmin }) {
             />
           </div>
           <div>
-            <div className="label">force_tpr</div>
+            <div className="text-zinc-400 text-xs mb-1">force_tpr</div>
             <input value={forceTpr} onChange={(e) => setForceTpr(e.target.value)} />
           </div>
         </div>
-        <div className="buttons">
-          <button className="btn-primary" onClick={triggerTestRun}>Trigger Test Run</button>
+        <div className="grid gap-2.5 grid-cols-1 mt-3">
+          <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" onClick={triggerTestRun}>Trigger Test Run</button>
         </div>
       </div>
     </>
@@ -1144,11 +1146,11 @@ function JobDetailsPage({ auth, setStatus }) {
   };
 
   if (loading) {
-    return <div className="card"><InlineLoader label="Loading job..." /></div>;
+    return <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl"><InlineLoader label="Loading job..." /></div>;
   }
 
   if (!payload) {
-    return <div className="card"><div className="error">Job not found.</div></div>;
+    return <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl"><div className="text-red-400">Job not found.</div></div>;
   }
 
   const job = payload.job || {};
@@ -1167,136 +1169,139 @@ function JobDetailsPage({ auth, setStatus }) {
 
   return (
     <>
-      <div className="details-header-row">
-        <Link className="link-btn" to="/jobs">&lt; Back</Link>
-        <div className="details-top-actions">
-          <button className="btn-ghost" onClick={loadJob}>Refresh</button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mt-1 mb-6">
+        <Link className="inline-flex items-center justify-center px-3 py-2 border border-zinc-700 bg-transparent text-zinc-300 no-underline hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm" to="/jobs">&lt; Back</Link>
+        <div className="flex justify-end sm:justify-end items-center gap-2.5">
+          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" onClick={loadJob}>Refresh</button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="details-title-row">
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mb-6">
           <div>
-            <div className="label">Role</div>
-            <div className="value">{job.title || ""}</div>
+            <div className="text-zinc-400 text-xs mb-1">Role</div>
+            <div className="text-base leading-relaxed">{job.title || ""}</div>
           </div>
-          {job.url ? (
-            <button className="btn-primary" onClick={applyToJob}>Apply</button>
-          ) : null}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3">
+            <div className="flex-1">
+              <div className="text-zinc-400 text-xs mb-1">Company</div>
+              {editingCompany ? (
+                <div className="flex gap-1.5 items-center mt-1">
+                  <input
+                    className="w-auto flex-1"
+                    style={{ padding: "6px 10px", fontSize: "14px" }}
+                    value={companyInput}
+                    onChange={(e) => setCompanyInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveCompany(); if (e.key === "Escape") setEditingCompany(false); }}
+                    autoFocus
+                  />
+                  <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold px-2 py-1.5 text-xs rounded-xl disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" disabled={savingCompany || !companyInput.trim()} onClick={saveCompany}>Save</button>
+                  <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 px-2 py-1.5 text-xs rounded-xl" onClick={() => setEditingCompany(false)}>Cancel</button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <div className="text-base leading-relaxed">{job.company || ""}</div>
+                  <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 px-2 py-1 text-xs rounded-lg" onClick={() => { setCompanyInput(job.company || ""); setEditingCompany(true); }}>Edit</button>
+                </div>
+              )}
+            </div>
+            {job.url ? (
+              <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 min-w-fit whitespace-nowrap" onClick={applyToJob}>Apply</button>
+            ) : null}
+          </div>
         </div>
-        <div className="grid">
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mb-6">
           <div>
-            <div className="label">Pay Range</div>
-            <div className="value">{job.compensation || "Not listed"}</div>
+            <div className="text-zinc-400 text-xs mb-1">Pay Range</div>
+            <div className="text-base leading-relaxed">{job.compensation || "Not listed"}</div>
           </div>
           <div>
-            <div className="label">Company</div>
-            {editingCompany ? (
-              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                <input
-                  style={{ width: "auto", flex: 1, padding: "6px 10px", fontSize: 14 }}
-                  value={companyInput}
-                  onChange={(e) => setCompanyInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") saveCompany(); if (e.key === "Escape") setEditingCompany(false); }}
-                  autoFocus
-                />
-                <button className="btn-primary" style={{ padding: "6px 10px", fontSize: 13 }} disabled={savingCompany || !companyInput.trim()} onClick={saveCompany}>Save</button>
-                <button className="btn-ghost" style={{ padding: "6px 10px", fontSize: 13 }} onClick={() => setEditingCompany(false)}>Cancel</button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div className="value">{job.company || ""}</div>
-                <button className="btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => { setCompanyInput(job.company || ""); setEditingCompany(true); }}>Edit</button>
-              </div>
-            )}
+            <div className="text-zinc-400 text-xs mb-1">Location</div>
+            <div className="text-base leading-relaxed">{job.location || ""}</div>
           </div>
-          <div>
-            <div className="label">Location</div>
-            <div className="value">{job.location || ""}</div>
-          </div>
-          {hasResume ? (
-            <div>
-              <div className="label">Resume</div>
-              <div className="muted">{resumeGeneratedAt ? `Last generated: ${new Date(resumeGeneratedAt * 1000).toLocaleString()}` : "Generated"}</div>
-            </div>
-          ) : null}
-          {hasCoverLetter ? (
-            <div>
-              <div className="label">Cover Letter</div>
-              <div className="muted">{coverGeneratedAt ? `Last generated: ${new Date(coverGeneratedAt * 1000).toLocaleString()}` : "Generated"}</div>
-            </div>
-          ) : null}
         </div>
 
         {hasAnyGeneratedArtifact ? (
-          <div className="row action-row">
+          <div className="flex flex-wrap gap-2.5 mt-3">
             {hasResume ? (
-              <button className="btn-ghost" onClick={() => window.open(resumeUrl, "_blank")}>View Resume</button>
+              <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" onClick={() => window.open(resumeUrl, "_blank")}>View Resume</button>
             ) : null}
             {hasCoverLetter ? (
-              <button className="btn-ghost" onClick={() => window.open(coverLetterUrl, "_blank")}>View Cover Letter</button>
+              <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" onClick={() => window.open(coverLetterUrl, "_blank")}>View Cover Letter</button>
             ) : null}
             {hasCoverLetter && coverLetterText ? (
-              <button className="btn-ghost" disabled={copyingCoverLetter} onClick={copyCoverLetterText}>
+              <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={copyingCoverLetter} onClick={copyCoverLetterText}>
                 {copyingCoverLetter ? "Copying..." : "Copy Cover Letter Text"}
               </button>
             ) : null}
           </div>
         ) : null}
-        <div className="row action-row">
+        <div className="flex flex-wrap gap-2.5 mt-3">
           {payload?.recruiterMessageTemplate ? (
-            <button className="btn-ghost" onClick={copyRecruiterMessage}>Copy Recruiter Message</button>
+            <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150" onClick={copyRecruiterMessage}>Copy Recruiter Message</button>
           ) : null}
         </div>
         {hasCoverLetter && organizationMission ? (
-          <div style={{ marginTop: 12 }}>
-            <div className="label">Organization Mission</div>
-            <div className="muted">{organizationMission}</div>
+          <div className="mt-3">
+            <div className="text-zinc-400 text-xs mb-1">Organization Mission</div>
+            <div className="text-zinc-400 text-sm">{organizationMission}</div>
           </div>
         ) : null}
 
         {canGenerateForUser ? (
-          <div className="buttons">
+          <div className="grid gap-2.5 grid-cols-1 mt-3">
             <div>
-              <div className="label">Resume Template</div>
+              <div className="text-zinc-400 text-xs mb-1">Resume Template</div>
               <select value={selectedResumeTemplate} onChange={(e) => setSelectedResumeTemplate(e.target.value)}>
                 {resumeTemplates.map((template) => (
                   <option key={template} value={template}>{template}</option>
                 ))}
               </select>
             </div>
-            <button className="btn-primary" disabled={generatingResume} onClick={generateResume}>Generate Resume</button>
-            <button className="btn-primary" disabled={generatingCover} onClick={generateCover}>Generate Coverletter</button>
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
+              <div>
+                <button className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={generatingResume} onClick={generateResume}>Generate Resume</button>
+                {hasResume ? (
+                  <div className="text-zinc-400 text-xs mt-1">{resumeGeneratedAt ? `Last generated: ${new Date(resumeGeneratedAt * 1000).toLocaleString()}` : "Generated"}</div>
+                ) : null}
+              </div>
+              <div>
+                <button className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={generatingCover} onClick={generateCover}>Generate Coverletter</button>
+                {hasCoverLetter ? (
+                  <div className="text-zinc-400 text-xs mt-1">{coverGeneratedAt ? `Last generated: ${new Date(coverGeneratedAt * 1000).toLocaleString()}` : "Generated"}</div>
+                ) : null}
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="muted">Resume and cover letter templates are not configured for this account.</div>
+          <div className="text-zinc-400 text-xs mt-3">Resume and cover letter templates are not configured for this account.</div>
         )}
       </div>
 
       {hasAnyGeneratedArtifact ? (
-        <div className="card">
-          <div className="section-title">Changes</div>
-          <div className="label">Added Skills</div>
+        <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+          <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Changes</div>
+          <div className="text-zinc-400 text-xs mb-1">Added Skills</div>
           {renderList(augment.added_skills || [])}
-          <div className="label" style={{ marginTop: 10 }}>Added Bullets</div>
+          <div className="text-zinc-400 text-xs mb-1 mt-2.5">Added Bullets</div>
           {renderList(augment.added_bullets || [])}
         </div>
       ) : null}
 
-      <div className="card">
-        <div className="section-title">JD Skills</div>
-        <div className="label">Matched in Resume</div>
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl mb-6">
+        <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">JD Skills</div>
+        <div className="text-zinc-400 text-xs mb-1">Matched in Resume</div>
         {renderList(summary.matched_in_resume || [])}
         {hasResume ? (
           <>
-            <div className="label" style={{ marginTop: 10 }}>Could Not Be Added</div>
+            <div className="text-zinc-400 text-xs mb-1 mt-2.5">Could Not Be Added</div>
             {renderList(summary.not_added || [])}
           </>
         ) : null}
       </div>
 
-      <div className="card">
-        <div className="label">Job Description</div>
+      <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl">
+        <div className="text-zinc-400 text-xs mb-1">Job Description</div>
         <pre>{payload.description || ""}</pre>
       </div>
     </>
@@ -1385,28 +1390,28 @@ function App() {
 
   if (initError) {
     return (
-      <div className="wrap">
-        <h1>PingedIn Portal</h1>
-        <div className="card"><div className="error">{initError}</div></div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="m-0 text-2xl sm:text-3xl tracking-wide font-bold">PingedIn Portal</h1>
+        <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl"><div className="text-red-400">{initError}</div></div>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="wrap">
-        <h1>PingedIn Portal</h1>
-        <div className="card"><div>Loading...</div></div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="m-0 text-2xl sm:text-3xl tracking-wide font-bold">PingedIn Portal</h1>
+        <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl"><div>Loading...</div></div>
       </div>
     );
   }
 
   return (
-    <div className="wrap">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <Header hasSession={auth.hasSession} onLogout={onLogout} isAdmin={currentUser.isAdmin} />
       {status.isError && status.text ? (
-        <div className="card status-card">
-          <div className="error">{status.text}</div>
+        <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 shadow-xl py-3 px-4 mb-6">
+          <div className="text-red-400">{status.text}</div>
         </div>
       ) : null}
 

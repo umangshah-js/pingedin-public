@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Palette Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #111; padding: 32px; display: flex; flex-direction: column; gap: 40px; }
+  h1 { color: #fff; font-size: 20px; margin-bottom: 8px; }
+  .palettes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .palette { border-radius: 16px; overflow: hidden; border: 2px solid rgba(255,255,255,0.08); }
+  .palette-label { color: #fff; font-size: 13px; font-weight: 700; padding: 8px 0 4px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ---- Slate / Blue ---- */
+  .slate { background: #0f172a; }
+  .slate .nav { background: #1e293b; border-bottom: 1px solid #334155; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .slate .nav .logo { color: #f1f5f9; font-weight: 700; font-size: 15px; }
+  .slate .nav .actions { display: flex; gap: 8px; }
+  .slate .nav .btn-nav { background: #334155; color: #f1f5f9; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .slate .nav .btn-nav.active { background: #3b82f6; }
+  .slate .body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .slate .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+  .slate .card .title { color: #f1f5f9; font-weight: 600; font-size: 14px; }
+  .slate .card .sub { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+  .slate .card .pill { display: inline-block; background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); border-radius: 999px; padding: 2px 8px; font-size: 11px; margin-top: 8px; }
+  .slate .card .btn { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; }
+  .slate .card .btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 7px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; }
+  .slate .input { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #f1f5f9; font-size: 13px; width: 100%; margin-top: 6px; outline: none; }
+
+  /* ---- Zinc / Amber ---- */
+  .zinc { background: #18181b; }
+  .zinc .nav { background: #27272a; border-bottom: 1px solid #3f3f46; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .zinc .nav .logo { color: #fafafa; font-weight: 700; font-size: 15px; }
+  .zinc .nav .actions { display: flex; gap: 8px; }
+  .zinc .nav .btn-nav { background: #3f3f46; color: #fafafa; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .zinc .nav .btn-nav.active { background: #f59e0b; color: #18181b; }
+  .zinc .body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .zinc .card { background: #27272a; border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; }
+  .zinc .card .title { color: #fafafa; font-weight: 600; font-size: 14px; }
+  .zinc .card .sub { color: #a1a1aa; font-size: 12px; margin-top: 4px; }
+  .zinc .card .pill { display: inline-block; background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); border-radius: 999px; padding: 2px 8px; font-size: 11px; margin-top: 8px; }
+  .zinc .card .btn { background: #f59e0b; color: #18181b; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; margin-top: 10px; cursor: pointer; }
+  .zinc .card .btn-ghost { background: transparent; color: #a1a1aa; border: 1px solid #3f3f46; border-radius: 8px; padding: 7px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; }
+  .zinc .input { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 8px 12px; color: #fafafa; font-size: 13px; width: 100%; margin-top: 6px; outline: none; }
+
+  /* ---- Indigo / Violet ---- */
+  .indigo { background: #0e0e1a; }
+  .indigo .nav { background: #16162a; border-bottom: 1px solid #2d2d52; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .indigo .nav .logo { color: #e2e8f0; font-weight: 700; font-size: 15px; }
+  .indigo .nav .actions { display: flex; gap: 8px; }
+  .indigo .nav .btn-nav { background: #2d2d52; color: #e2e8f0; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .indigo .nav .btn-nav.active { background: #818cf8; color: #0e0e1a; }
+  .indigo .body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .indigo .card { background: #16162a; border: 1px solid #2d2d52; border-radius: 12px; padding: 16px; }
+  .indigo .card .title { color: #e2e8f0; font-weight: 600; font-size: 14px; }
+  .indigo .card .sub { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+  .indigo .card .pill { display: inline-block; background: rgba(129,140,248,0.12); color: #a5b4fc; border: 1px solid rgba(129,140,248,0.3); border-radius: 999px; padding: 2px 8px; font-size: 11px; margin-top: 8px; }
+  .indigo .card .btn { background: #818cf8; color: #0e0e1a; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; margin-top: 10px; cursor: pointer; }
+  .indigo .card .btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #2d2d52; border-radius: 8px; padding: 7px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; }
+  .indigo .input { background: #0e0e1a; border: 1px solid #2d2d52; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; font-size: 13px; width: 100%; margin-top: 6px; outline: none; }
+
+  /* ---- Teal / Emerald (Evolved) ---- */
+  .teal { background: #0b1120; }
+  .teal .nav { background: #111827; border-bottom: 1px solid #1f2937; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .teal .nav .logo { color: #e2e8f0; font-weight: 700; font-size: 15px; }
+  .teal .nav .actions { display: flex; gap: 8px; }
+  .teal .nav .btn-nav { background: #1f2937; color: #e2e8f0; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .teal .nav .btn-nav.active { background: #10b981; color: #0b1120; }
+  .teal .body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .teal .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; }
+  .teal .card .title { color: #e2e8f0; font-weight: 600; font-size: 14px; }
+  .teal .card .sub { color: #64748b; font-size: 12px; margin-top: 4px; }
+  .teal .card .pill { display: inline-block; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); border-radius: 999px; padding: 2px 8px; font-size: 11px; margin-top: 8px; }
+  .teal .card .btn { background: #10b981; color: #0b1120; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; margin-top: 10px; cursor: pointer; }
+  .teal .card .btn-ghost { background: transparent; color: #64748b; border: 1px solid #1f2937; border-radius: 8px; padding: 7px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; }
+  .teal .input { background: #0b1120; border: 1px solid #1f2937; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; font-size: 13px; width: 100%; margin-top: 6px; outline: none; }
+
+  .row { display: flex; gap: 8px; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <h1>Color Palette Options — PingedIn Portal</h1>
+  <div class="palettes">
+
+    <!-- Slate Blue -->
+    <div>
+      <div class="palette-label">1 · Slate Dark + Blue</div>
+      <div class="palette slate">
+        <div class="nav">
+          <span class="logo">PingedIn</span>
+          <div class="actions">
+            <button class="btn-nav active">Jobs</button>
+            <button class="btn-nav">Preferences</button>
+            <button class="btn-nav">Sign Out</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="title">Senior Data Engineer</div>
+            <div class="sub">Stripe · New York · $160K–$200K</div>
+            <span class="pill">Resume ready</span>
+            <div class="row">
+              <button class="btn">Open Details</button>
+              <button class="btn-ghost">View Resume</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;">Search Jobs</div>
+            <input class="input" placeholder="Search by title, company..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zinc Amber -->
+    <div>
+      <div class="palette-label">2 · Zinc Dark + Amber</div>
+      <div class="palette zinc">
+        <div class="nav">
+          <span class="logo">PingedIn</span>
+          <div class="actions">
+            <button class="btn-nav active">Jobs</button>
+            <button class="btn-nav">Preferences</button>
+            <button class="btn-nav">Sign Out</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="title">Senior Data Engineer</div>
+            <div class="sub">Stripe · New York · $160K–$200K</div>
+            <span class="pill">Resume ready</span>
+            <div class="row">
+              <button class="btn">Open Details</button>
+              <button class="btn-ghost">View Resume</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="color:#a1a1aa;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;">Search Jobs</div>
+            <input class="input" placeholder="Search by title, company..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indigo Violet -->
+    <div>
+      <div class="palette-label">3 · Indigo/Violet Dark</div>
+      <div class="palette indigo">
+        <div class="nav">
+          <span class="logo">PingedIn</span>
+          <div class="actions">
+            <button class="btn-nav active">Jobs</button>
+            <button class="btn-nav">Preferences</button>
+            <button class="btn-nav">Sign Out</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="title">Senior Data Engineer</div>
+            <div class="sub">Stripe · New York · $160K–$200K</div>
+            <span class="pill">Resume ready</span>
+            <div class="row">
+              <button class="btn">Open Details</button>
+              <button class="btn-ghost">View Resume</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;">Search Jobs</div>
+            <input class="input" placeholder="Search by title, company..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teal Emerald -->
+    <div>
+      <div class="palette-label">4 · Teal/Emerald (Evolved current)</div>
+      <div class="palette teal">
+        <div class="nav">
+          <span class="logo">PingedIn</span>
+          <div class="actions">
+            <button class="btn-nav active">Jobs</button>
+            <button class="btn-nav">Preferences</button>
+            <button class="btn-nav">Sign Out</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="title">Senior Data Engineer</div>
+            <div class="sub">Stripe · New York · $160K–$200K</div>
+            <span class="pill">Resume ready</span>
+            <div class="row">
+              <button class="btn">Open Details</button>
+              <button class="btn-ghost">View Resume</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;">Search Jobs</div>
+            <input class="input" placeholder="Search by title, company..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
