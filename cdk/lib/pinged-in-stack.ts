@@ -196,7 +196,7 @@ export class PingedInStack extends cdk.Stack {
         FORCE_TPR: '',
         REQUEST_DELAY_SECONDS: '0.6',
         ROLE_KEYWORDS: 'Data Engineer',
-        PUSHOVER_USER_KEY: 'u4km6osr7t6w37h9pc4ncbd5o9yabo',
+        PUSHOVER_USER_KEY: '', // set your Pushover user key here or via env
         PUSHOVER_APP_TOKEN_SECRET_ARN: pushoverAppToken.secretArn,
         DEBUG_HTML: 'false',
         RESUME_S3_BUCKET: resumeBucket.bucketName,
