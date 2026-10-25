@@ -373,7 +373,7 @@ class Config:
             "USER_TEMPLATES_ROOT",
             os.path.join(os.path.dirname(__file__), "users"),
         )
-        self.default_template_user = os.getenv("DEFAULT_TEMPLATE_USER", "umang")
+        self.default_template_user = os.getenv("DEFAULT_TEMPLATE_USER", "example")
         self.resume_tex_path = os.getenv(
             "RESUME_TEX_PATH",
             os.path.join(self.template_root, self.default_template_user, "resume.tex"),
@@ -902,7 +902,8 @@ def generate_resume_assets(
 
     company = job_record.get("company", "")
     role = job_record.get("title", "")
-    pdf_filename = f"UmangShah_Resume_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
+    user_prefix = _safe_filename_part(config.default_template_user)
+    pdf_filename = f"{user_prefix}_Resume_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
     pdf_key = store.key_for(job_id, pdf_filename)
     pdf_uploaded = False
     if result and result.get("out_pdf") and os.path.exists(out_pdf):
@@ -1140,7 +1141,8 @@ def generate_cover_letter_assets(
 
     pdf_uploaded = False
     pdf_key = ""
-    pdf_filename = f"UmangShah_CoverLetter_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
+    user_prefix = _safe_filename_part(config.default_template_user)
+    pdf_filename = f"{user_prefix}_CoverLetter_{_safe_filename_part(company)}_{_safe_filename_part(role)}.pdf"
     tex_key = store.key_for(job_id, "cover_letter.tex")
     store.upload_file(tex_key, out_tex, content_type="application/x-tex")
 

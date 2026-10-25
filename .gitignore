@@ -17,3 +17,24 @@ cdk/cdk.out/
 
 # OS
 .DS_Store
+
+# Personal user templates (keep only src/users/example/)
+src/users/*/resume*.tex
+src/users/*/cover_letter*.tex
+src/users/*/cover_letter*.pdf
+src/users/*/cover_letter*.aux
+src/users/*/cover_letter*.log
+src/users/*/media/
+src/users/*/skills_grouped.json
+src/users/*/resume_skills.json
+!src/users/example/
+
+# Root-level personal artifacts
+resume*.tex
+resume*.pdf
+resume*.aux
+skills_grouped.json
+resume_skills.json
+replacement_rules.json
+missfont.log
+output/

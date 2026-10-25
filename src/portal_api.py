@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -150,6 +151,17 @@ def _user_profile_key(user_id: str) -> str:
     return f"__user__#{user_id}"
 
 
+USER_INDEX_KEY = "__userindex__"
+
+
+def _add_to_user_index(table, user_id: str) -> None:
+    table.update_item(
+        Key={"jobId": USER_INDEX_KEY},
+        UpdateExpression="ADD userIds :ids",
+        ExpressionAttributeValues={":ids": {user_id}},
+    )
+
+
 def _normalize_role_keywords(value: Any, fallback: str) -> list[str]:
     source: Any = value
     if source is None:
@@ -192,28 +204,51 @@ def _parse_bool(value: Any, default: bool) -> bool:
     return default
 
 
+_ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+
+
 def _can_claim_legacy_jobs(identity: Dict[str, str]) -> bool:
     username = str(identity.get("username") or "").strip().lower()
-    return username == "umang"
+    return username == _ADMIN_USERNAME
 
 
 def _is_admin(identity: Dict[str, str]) -> bool:
-    return str(identity.get("username") or "").strip().lower() == "umang"
+    return str(identity.get("username") or "").strip().lower() == _ADMIN_USERNAME
 
 
 def _load_user_profiles(table) -> list[Dict[str, Any]]:
-    scan_kwargs = {
+    projection_kwargs = {
         "ProjectionExpression": (
             "jobId, userId, username, templateUser, keywords, #loc, enabled, "
             "notificationUserKey, scheduleEnabled, scheduleTimezone, scheduleStart, scheduleEnd, updatedAt"
         ),
         "ExpressionAttributeNames": {"#loc": "location"},
     }
-    resp = table.scan(**scan_kwargs)
-    items = list(resp.get("Items") or [])
-    while resp.get("LastEvaluatedKey"):
-        resp = table.scan(ExclusiveStartKey=resp["LastEvaluatedKey"], **scan_kwargs)
-        items.extend(resp.get("Items") or [])
+
+    index_item = table.get_item(Key={"jobId": USER_INDEX_KEY}).get("Item")
+    if index_item and index_item.get("userIds"):
+        user_ids = list(index_item["userIds"])
+        keys = [{"jobId": _user_profile_key(uid)} for uid in user_ids]
+        items: list[Dict[str, Any]] = []
+        dynamodb = boto3.resource("dynamodb")
+        table_name = table.name
+        for i in range(0, len(keys), 100):
+            resp = dynamodb.batch_get_item(
+                RequestItems={
+                    table_name: {
+                        "Keys": keys[i:i + 100],
+                        **projection_kwargs,
+                    }
+                }
+            )
+            items.extend(resp["Responses"].get(table_name) or [])
+    else:
+        resp = table.scan(**projection_kwargs)
+        items = list(resp.get("Items") or [])
+        while resp.get("LastEvaluatedKey"):
+            resp = table.scan(ExclusiveStartKey=resp["LastEvaluatedKey"], **projection_kwargs)
+            items.extend(resp.get("Items") or [])
+
     profiles: list[Dict[str, Any]] = []
     for item in items:
         job_id = str(item.get("jobId") or "")
@@ -439,6 +474,43 @@ def _strip_html_tags(text: str) -> str:
     return re.sub(r"<[^>]+>", " ", text).strip()
 
 
+def _clean_job_title(text: str) -> str:
+    cleaned = _strip_html_tags(text)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        return ""
+    separators = (" | ", " - ", " at ")
+    suffix_markers = (
+        "linkedin",
+        "job",
+        "jobs",
+        "careers",
+        "greenhouse",
+        "lever",
+        "workday",
+    )
+    for separator in separators:
+        parts = [part.strip() for part in cleaned.split(separator) if part.strip()]
+        if len(parts) < 2:
+            continue
+        last = parts[-1].lower()
+        if any(marker in last for marker in suffix_markers):
+            cleaned = parts[0]
+            break
+    return cleaned
+
+
+def _extract_meta_content(html: str, attr_name: str, attr_value: str) -> str:
+    pattern = (
+        rf'<meta[^>]+{attr_name}=["\']{re.escape(attr_value)}["\'][^>]+content=["\'](.*?)["\'][^>]*>'
+        rf'|<meta[^>]+content=["\'](.*?)["\'][^>]+{attr_name}=["\']{re.escape(attr_value)}["\'][^>]*>'
+    )
+    match = re.search(pattern, html, re.S | re.I)
+    if not match:
+        return ""
+    return next((group for group in match.groups() if group), "").strip()
+
+
 def _parse_job_metadata_from_html(html: str) -> Dict[str, str]:
     """Extract title, company, location from a job page HTML. Returns empty strings on miss."""
     result: Dict[str, str] = {"title": "", "company": "", "location": ""}
@@ -470,15 +542,31 @@ def _parse_job_metadata_from_html(html: str) -> Dict[str, str]:
         if result["title"] or result["company"]:
             return result
     # Fallback: LinkedIn guest API HTML fragment selectors
-    m = re.search(r'<h2[^>]*top-card-layout__title[^>]*>(.*?)</h2>', html, re.S | re.I)
+    m = re.search(r'<h[12][^>]*top-card-layout__title[^>]*>(.*?)</h[12]>', html, re.S | re.I)
     if m:
-        result["title"] = _strip_html_tags(m.group(1))
+        result["title"] = _clean_job_title(m.group(1))
     m = re.search(r'<a[^>]*topcard__org-name-link[^>]*>(.*?)</a>', html, re.S | re.I)
     if m:
         result["company"] = _strip_html_tags(m.group(1))
     m = re.search(r'<span[^>]*topcard__flavor--bullet[^>]*>(.*?)</span>', html, re.S | re.I)
     if m:
         result["location"] = _strip_html_tags(m.group(1))
+    if result["title"] or result["company"] or result["location"]:
+        return result
+    og_title = _extract_meta_content(html, "property", "og:title") or _extract_meta_content(html, "name", "twitter:title")
+    if og_title:
+        result["title"] = _clean_job_title(og_title)
+    og_site_name = _extract_meta_content(html, "property", "og:site_name")
+    if og_site_name and not result["company"]:
+        result["company"] = _strip_html_tags(og_site_name)
+    og_location = _extract_meta_content(html, "property", "job:location") or _extract_meta_content(html, "name", "location")
+    if og_location and not result["location"]:
+        result["location"] = _strip_html_tags(og_location)
+    if result["title"] or result["company"] or result["location"]:
+        return result
+    m = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
+    if m:
+        result["title"] = _clean_job_title(m.group(1))
     return result
 
 
@@ -490,17 +578,24 @@ def _build_custom_job_record(job_id: str, jd_url: str, event: Dict[str, Any], us
     title = (payload.get("title") or params.get("title") or "").strip()
     company = (payload.get("company") or params.get("company") or "").strip()
     location = (payload.get("location") or params.get("location") or "").strip()
-    if not title or not company:
+    description = ""
+    html = ""
+    try:
+        li_job_id = extract_linkedin_job_id(jd_url)
+        html = fetch_linkedin_guest_html(li_job_id) if li_job_id else fetch_url_text(jd_url)
+        scraped = _parse_job_metadata_from_html(html)
+        title = title or scraped.get("title") or ""
+        company = company or scraped.get("company") or ""
+        location = location or scraped.get("location") or ""
+    except Exception as exc:
+        print(f"[add-url] metadata fetch failed for {jd_url}: {exc}")
+    if html:
         try:
-            li_job_id = extract_linkedin_job_id(jd_url)
-            html = fetch_linkedin_guest_html(li_job_id) if li_job_id else fetch_url_text(jd_url)
-            scraped = _parse_job_metadata_from_html(html)
-            title = title or scraped.get("title") or ""
-            company = company or scraped.get("company") or ""
-            location = location or scraped.get("location") or ""
-        except Exception as exc:
-            print(f"[add-url] metadata fetch failed for {jd_url}: {exc}")
-    return {
+            desc = jd_extract_description_from_html(html)
+            description = jd_extract_description_text(desc).strip() if desc else ""
+        except Exception:
+            description = ""
+    record = {
         "jobId": job_id,
         "title": title or "Custom Job",
         "company": company or "(unknown)",
@@ -509,6 +604,16 @@ def _build_custom_job_record(job_id: str, jd_url: str, event: Dict[str, Any], us
         "seenAt": int(time.time()),
         "userIds": [user_id],
     }
+    if description:
+        record["description"] = description
+        try:
+            from linkedin_job_scraper import extract_compensation
+            comp = extract_compensation(description)
+            if comp:
+                record["compensation"] = comp
+        except Exception:
+            pass
+    return record
 
 
 def _add_user_membership(table, item: Dict[str, Any], user_id: str) -> Dict[str, Any]:
@@ -802,7 +907,7 @@ def handler(event, _context):
             for profile in profiles:
                 profile["displayName"] = str(profile.get("username") or profile.get("templateUser") or profile.get("userId") or "")
                 explicit_key = str(profile.get("notificationUserKey") or "").strip()
-                fallback_key = config.pushover_user_key if str(profile.get("username") or "").strip().lower() == "umang" else ""
+                fallback_key = config.pushover_user_key if str(profile.get("username") or "").strip().lower() == _ADMIN_USERNAME else ""
                 profile["effectiveNotificationUserKey"] = explicit_key or fallback_key
                 profile["notificationUserKeySource"] = "profile" if explicit_key else ("default" if fallback_key else "none")
             return _response(200, {"users": profiles})
@@ -1020,13 +1125,36 @@ def handler(event, _context):
         existing = table.get_item(Key={"jobId": add_job_id}).get("Item")
         if existing:
             item = _add_user_membership(table, existing, user_id)
+            # Backfill missing metadata on existing records
+            needs_update = {}
             if not str(item.get("url") or "").strip():
+                needs_update["url"] = add_jd_url
+            is_placeholder_title = not item.get("title") or item.get("title") == "Custom Job"
+            is_missing_company = not item.get("company") or item.get("company") == "(unknown)"
+            is_missing_desc = not item.get("description")
+            if is_placeholder_title or is_missing_company or is_missing_desc:
+                fresh = _build_custom_job_record(add_job_id, add_jd_url, event, user_id)
+                if is_placeholder_title and fresh.get("title") and fresh["title"] != "Custom Job":
+                    needs_update["title"] = fresh["title"]
+                if is_missing_company and fresh.get("company") and fresh["company"] != "(unknown)":
+                    needs_update["company"] = fresh["company"]
+                if not item.get("location") and fresh.get("location"):
+                    needs_update["location"] = fresh["location"]
+                if is_missing_desc and fresh.get("description"):
+                    needs_update["description"] = fresh["description"]
+                if not item.get("compensation") and fresh.get("compensation"):
+                    needs_update["compensation"] = fresh["compensation"]
+            if needs_update:
                 now = int(time.time())
+                needs_update["updatedAt"] = now
+                expr_names = {f"#k{i}": k for i, k in enumerate(needs_update)}
+                expr_values = {f":v{i}": v for i, v in enumerate(needs_update.values())}
+                set_parts = [f"{n} = {v}" for n, v in zip(expr_names.keys(), expr_values.keys())]
                 table.update_item(
                     Key={"jobId": add_job_id},
-                    UpdateExpression="SET #url = :url, #updatedAt = :updatedAt",
-                    ExpressionAttributeNames={"#url": "url", "#updatedAt": "updatedAt"},
-                    ExpressionAttributeValues={":url": add_jd_url, ":updatedAt": now},
+                    UpdateExpression="SET " + ", ".join(set_parts),
+                    ExpressionAttributeNames=expr_names,
+                    ExpressionAttributeValues=expr_values,
                 )
                 item = table.get_item(Key={"jobId": add_job_id}).get("Item") or item
         else:
@@ -1043,19 +1171,20 @@ def handler(event, _context):
 
     item = None
     if path.endswith("/list") and not job_id:
-        page = 1
-        page_size = 10
         search_query = str(_get_param(event, "q") or "").strip().lower()
+        cursor_str = _get_param(event, "cursor") or None
         try:
-            page = int(_get_param(event, "page") or page)
-        except Exception:
-            page = 1
-        try:
-            page_size = int(_get_param(event, "pageSize") or _get_param(event, "limit") or page_size)
+            page_size = int(_get_param(event, "pageSize") or _get_param(event, "limit") or 10)
         except Exception:
             page_size = 10
-        page = max(1, page)
         page_size = max(1, min(page_size, 100))
+
+        exclusive_start_key = None
+        if cursor_str:
+            try:
+                exclusive_start_key = json.loads(base64.b64decode(cursor_str).decode())
+            except Exception:
+                exclusive_start_key = None
 
         scan_kwargs = {
             "ProjectionExpression": (
@@ -1064,40 +1193,41 @@ def handler(event, _context):
                 "resumeGeneratedAt, coverLetterGeneratedAt, userIds, resumeByUser, coverLetterByUser"
             ),
             "ExpressionAttributeNames": {"#t": "title", "#c": "company", "#l": "location", "#u": "url"},
+            "Limit": page_size,
         }
-        items = []
-        resp = table.scan(**scan_kwargs)
-        items.extend(resp.get("Items") or [])
-        while resp.get("LastEvaluatedKey"):
-            resp = table.scan(ExclusiveStartKey=resp["LastEvaluatedKey"], **scan_kwargs)
-            items.extend(resp.get("Items") or [])
 
-        filtered_items = []
-        for it in items:
-            if str(it.get("jobId", "")).startswith("__"):
-                continue
-            user_ids = it.get("userIds") or []
-            if user_id in user_ids:
-                filtered_items.append(it)
-                continue
-            if not user_ids and _can_claim_legacy_jobs(identity):
-                claimed = _claim_legacy_job(table, it, user_id)
-                if user_id in (claimed.get("userIds") or []):
-                    filtered_items.append(claimed)
-        items = filtered_items
-        for it in items:
-            resume_asset = _get_user_asset(it, "resumeByUser", user_id)
-            cover_asset = _get_user_asset(it, "coverLetterByUser", user_id)
-            it["resumePdfUploaded"] = bool(
-                resume_asset.get("resumePdfUploaded")
-                or _legacy_asset_visible(it, user_id, "resumePdfUploaded", allow_legacy_owner)
-            )
-            it["coverLetterPdfUploaded"] = bool(
-                cover_asset.get("coverLetterPdfUploaded")
-                or _legacy_asset_visible(it, user_id, "coverLetterPdfUploaded", allow_legacy_owner)
-            )
-            it["resumeGeneratedAt"] = int(resume_asset.get("resumeGeneratedAt") or it.get("resumeGeneratedAt") or 0)
-            it["coverLetterGeneratedAt"] = int(cover_asset.get("coverLetterGeneratedAt") or it.get("coverLetterGeneratedAt") or 0)
+        collected: list[Dict[str, Any]] = []
+        scan_start = exclusive_start_key
+        last_evaluated_key = None
+        # For search, scan the full table; for listing, stop once page is filled (max 10 batches)
+        max_batches = 50 if search_query else 10
+
+        for _ in range(max_batches):
+            kwargs = dict(scan_kwargs)
+            if scan_start:
+                kwargs["ExclusiveStartKey"] = scan_start
+            resp = table.scan(**kwargs)
+            batch = resp.get("Items") or []
+            scan_start = resp.get("LastEvaluatedKey")
+
+            for it in batch:
+                if str(it.get("jobId", "")).startswith("__"):
+                    continue
+                user_ids = it.get("userIds") or []
+                if user_id in user_ids:
+                    collected.append(it)
+                elif not user_ids and _can_claim_legacy_jobs(identity):
+                    claimed = _claim_legacy_job(table, it, user_id)
+                    if user_id in (claimed.get("userIds") or []):
+                        collected.append(claimed)
+
+            if not scan_start:
+                last_evaluated_key = None
+                break
+            if not search_query and len(collected) >= page_size:
+                last_evaluated_key = scan_start
+                break
+            last_evaluated_key = scan_start
 
         if search_query:
             def _matches_search(job_item: Dict[str, Any]) -> bool:
@@ -1111,24 +1241,35 @@ def handler(event, _context):
                     ]
                 ).lower()
                 return search_query in haystack
+            collected = [it for it in collected if _matches_search(it)]
 
-            items = [it for it in items if _matches_search(it)]
+        for it in collected:
+            resume_asset = _get_user_asset(it, "resumeByUser", user_id)
+            cover_asset = _get_user_asset(it, "coverLetterByUser", user_id)
+            it["resumePdfUploaded"] = bool(
+                resume_asset.get("resumePdfUploaded")
+                or _legacy_asset_visible(it, user_id, "resumePdfUploaded", allow_legacy_owner)
+            )
+            it["coverLetterPdfUploaded"] = bool(
+                cover_asset.get("coverLetterPdfUploaded")
+                or _legacy_asset_visible(it, user_id, "coverLetterPdfUploaded", allow_legacy_owner)
+            )
+            it["resumeGeneratedAt"] = int(resume_asset.get("resumeGeneratedAt") or it.get("resumeGeneratedAt") or 0)
+            it["coverLetterGeneratedAt"] = int(cover_asset.get("coverLetterGeneratedAt") or it.get("coverLetterGeneratedAt") or 0)
 
-        items.sort(key=lambda it: it.get("seenAt", 0), reverse=True)
-        total_count = len(items)
-        total_pages = max(1, (total_count + page_size - 1) // page_size)
-        if page > total_pages:
-            page = total_pages
-        start_idx = (page - 1) * page_size
-        paged_items = items[start_idx: start_idx + page_size]
+        collected.sort(key=lambda it: it.get("seenAt", 0), reverse=True)
+        paged_items = collected[:page_size]
+
+        next_cursor = None
+        if not search_query and last_evaluated_key:
+            next_cursor = base64.b64encode(json.dumps(last_evaluated_key).encode()).decode()
+
         return _response(
             200,
             {
                 "items": paged_items,
-                "totalCount": total_count,
-                "page": page,
+                "nextCursor": next_cursor,
                 "pageSize": page_size,
-                "totalPages": total_pages,
             },
         )
     if path.endswith("/latest") and not job_id:
@@ -1170,7 +1311,11 @@ def handler(event, _context):
 
     if path.endswith("/job/update") and _get_method(event) == "POST":
         allowed_fields = {"company", "title"}
-        updates = {k: v for k, v in (body_payload or {}).items() if k in allowed_fields and isinstance(v, str)}
+        updates = {
+            k: v.strip()
+            for k, v in (body_payload or {}).items()
+            if k in allowed_fields and isinstance(v, str) and v.strip()
+        }
         if not updates:
             return _response(400, {"error": "No valid fields to update"})
         expr_names = {f"#f{i}": k for i, k in enumerate(updates)}

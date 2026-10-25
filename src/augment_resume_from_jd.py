@@ -10,12 +10,13 @@ from typing import Dict, List, Tuple
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DEFAULT_SKILLS_GROUPED = os.path.join(SCRIPT_DIR, 'users', 'umang', 'skills_grouped.json')
-DEFAULT_RESUME_TEX = os.path.join(SCRIPT_DIR, 'users', 'umang', 'resume.tex')
+_DEFAULT_USER = os.getenv("DEFAULT_TEMPLATE_USER", "example")
+DEFAULT_SKILLS_GROUPED = os.path.join(SCRIPT_DIR, 'users', _DEFAULT_USER, 'skills_grouped.json')
+DEFAULT_RESUME_TEX = os.path.join(SCRIPT_DIR, 'users', _DEFAULT_USER, 'resume.tex')
 DEFAULT_RESUME_SKILLS = os.path.join(SCRIPT_DIR, 'resume_skills.json')
 DEFAULT_UPDATED_TEX = os.path.join(SCRIPT_DIR, 'resume_updated.tex')
 DEFAULT_UPDATED_PDF = os.path.join(SCRIPT_DIR, 'resume_updated.pdf')
-DEFAULT_REPLACEMENT_RULES = os.path.join(SCRIPT_DIR, 'users', 'umang', 'replacement_rules.json')
+DEFAULT_REPLACEMENT_RULES = os.path.join(SCRIPT_DIR, 'users', _DEFAULT_USER, 'replacement_rules.json')
 
 DEFAULT_USER_AGENT = (
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '

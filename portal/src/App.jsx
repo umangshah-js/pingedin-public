@@ -586,11 +586,10 @@ function JobsPage({ auth, setStatus }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
-  const [pageIndex, setPageIndex] = useState(0);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [nextCursor, setNextCursor] = useState(null);
   const [jobSearchInput, setJobSearchInput] = useState("");
   const [jobSearchQuery, setJobSearchQuery] = useState("");
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [newJobUrl, setNewJobUrl] = useState("");
   const [addingJob, setAddingJob] = useState(false);
@@ -607,7 +606,7 @@ function JobsPage({ auth, setStatus }) {
 
   const commitSearch = () => {
     setJobSearchQuery(jobSearchInput.trim());
-    setPageIndex(0);
+    setCursorStack([]);
   };
 
   useEffect(() => {
@@ -615,10 +614,10 @@ function JobsPage({ auth, setStatus }) {
     const load = async () => {
       setLoading(true);
       try {
-        const page = pageIndex + 1;
         const query = new URLSearchParams();
-        query.set("page", String(page));
         query.set("pageSize", String(pageSize));
+        const currentCursor = cursorStack.length > 0 ? cursorStack[cursorStack.length - 1] : null;
+        if (currentCursor) query.set("cursor", currentCursor);
         if (jobSearchQuery) query.set("q", jobSearchQuery);
         const res = await auth.apiFetch(`/list?${query.toString()}`);
         if (!res.ok) {
@@ -628,8 +627,7 @@ function JobsPage({ auth, setStatus }) {
         const data = await res.json();
         if (!cancelled) {
           setJobs(data.items || []);
-          setTotalCount(Number(data.totalCount || 0));
-          setTotalPages(Math.max(1, Number(data.totalPages || 1)));
+          setNextCursor(data.nextCursor || null);
           setStatus("", false);
         }
       } catch (err) {
@@ -640,7 +638,7 @@ function JobsPage({ auth, setStatus }) {
     };
     load();
     return () => { cancelled = true; };
-  }, [pageIndex, jobSearchQuery, auth.apiFetch, setStatus]);
+  }, [cursorStack, jobSearchQuery, auth.apiFetch, setStatus]);
 
   const addJobByUrl = async () => {
     const jdUrl = newJobUrl.trim();
@@ -689,7 +687,7 @@ function JobsPage({ auth, setStatus }) {
             <div className="m-0 mb-1.5 text-xs font-bold text-amber-500 uppercase tracking-widest">Recent Jobs</div>
             <div className="text-zinc-400">Sorted by newest seen first</div>
           </div>
-          <div className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full border border-zinc-600 bg-zinc-700/50 text-xs font-semibold text-zinc-300">{totalCount} total</div>
+          <div className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full border border-zinc-600 bg-zinc-700/50 text-xs font-semibold text-zinc-300">Page {cursorStack.length + 1}</div>
         </div>
         <div className="text-zinc-400 text-xs mb-1">Search Jobs</div>
         <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -709,7 +707,7 @@ function JobsPage({ auth, setStatus }) {
             onClick={() => {
               setJobSearchInput("");
               setJobSearchQuery("");
-              setPageIndex(0);
+              setCursorStack([]);
             }}
           >
             Clear
@@ -745,11 +743,12 @@ function JobsPage({ auth, setStatus }) {
             </div>
           </div>
         ))}
-        <div className="grid gap-2.5 grid-cols-2 mt-3">
-          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={pageIndex === 0} onClick={() => setPageIndex((x) => Math.max(0, x - 1))}>Previous</button>
-          <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={pageIndex + 1 >= totalPages} onClick={() => setPageIndex((x) => Math.min(totalPages - 1, x + 1))}>Next</button>
-        </div>
-        <div className="text-center mt-2 text-zinc-400 text-xs">Page {pageIndex + 1} of {totalPages}</div>
+        {!jobSearchQuery && (
+          <div className="grid gap-2.5 grid-cols-2 mt-3">
+            <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={cursorStack.length === 0} onClick={() => setCursorStack((s) => s.slice(0, -1))}>Previous</button>
+            <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-zinc-200 rounded-xl font-semibold text-sm px-4 py-2.5 border border-transparent cursor-pointer hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!nextCursor} onClick={() => setCursorStack((s) => [...s, nextCursor])}>Next</button>
+          </div>
+        )}
     </div>
   );
 }
@@ -1007,6 +1006,9 @@ function JobDetailsPage({ auth, setStatus }) {
   const [generatingResume, setGeneratingResume] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [selectedResumeTemplate, setSelectedResumeTemplate] = useState("resume.tex");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
   const [editingCompany, setEditingCompany] = useState(false);
   const [companyInput, setCompanyInput] = useState("");
   const [savingCompany, setSavingCompany] = useState(false);
@@ -1104,6 +1106,28 @@ function JobDetailsPage({ auth, setStatus }) {
     }
   };
 
+  const saveTitle = async () => {
+    setSavingTitle(true);
+    try {
+      const res = await auth.apiFetch(`/job/update?jobId=${encodeURIComponent(jobId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: titleInput.trim() }),
+      });
+      if (!res.ok) {
+        setStatus(`Failed to update role (${res.status})`, true);
+        return;
+      }
+      setEditingTitle(false);
+      await loadJob();
+      setStatus("Role updated.", false);
+    } catch (err) {
+      setStatus(`Failed to update role: ${err}`, true);
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
   const generateResume = async () => {
     setGeneratingResume(true);
     setStatus("Generating resume...", false);
@@ -1180,7 +1204,25 @@ function JobDetailsPage({ auth, setStatus }) {
         <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 mb-6">
           <div>
             <div className="text-zinc-400 text-xs mb-1">Role</div>
-            <div className="text-base leading-relaxed">{job.title || ""}</div>
+            {editingTitle ? (
+              <div className="flex gap-1.5 items-center mt-1">
+                <input
+                  className="w-auto flex-1"
+                  style={{ padding: "6px 10px", fontSize: "14px" }}
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                  autoFocus
+                />
+                <button className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold px-2 py-1.5 text-xs rounded-xl disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" disabled={savingTitle || !titleInput.trim()} onClick={saveTitle}>Save</button>
+                <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 px-2 py-1.5 text-xs rounded-xl" onClick={() => setEditingTitle(false)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="flex gap-2 items-center">
+                <div className="text-base leading-relaxed">{job.title || ""}</div>
+                <button className="bg-transparent border border-zinc-700 text-zinc-300 hover:border-zinc-600 px-2 py-1 text-xs rounded-lg" onClick={() => { setTitleInput(job.title || ""); setEditingTitle(true); }}>Edit</button>
+              </div>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3">
             <div className="flex-1">

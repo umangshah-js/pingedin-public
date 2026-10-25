@@ -13,12 +13,14 @@ import * as path from 'path';
 export class PingedInStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    const portalPublicUrl = 'https://pingedin.umangshah.me';
+    const portalPublicUrl = 'https://your-domain.example.com'; // replace with your portal URL
 
     const table = new dynamodb.Table(this, 'LinkedInJobsTable', {
       tableName: 'linkedin_jobs',
       partitionKey: { name: 'jobId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
       removalPolicy: cdk.RemovalPolicy.RETAIN
     });
 
@@ -122,11 +124,12 @@ export class PingedInStack extends cdk.Stack {
         RESUME_S3_PREFIX: 'resumes',
         RESUME_URL_EXPIRES_SECONDS: '604800',
         USER_TEMPLATES_ROOT: '/var/task/users',
-        DEFAULT_TEMPLATE_USER: 'umang',
-        RESUME_TEX_PATH: '/var/task/users/umang/resume.tex',
-        COVER_LETTER_TEX_PATH: '/var/task/users/umang/cover_letter.tex',
-        SKILLS_GROUPED_PATH: '/var/task/users/umang/skills_grouped.json',
-        REPLACEMENT_RULES_PATH: '/var/task/users/umang/replacement_rules.json',
+        ADMIN_USERNAME: 'admin', // replace with your Cognito username
+        DEFAULT_TEMPLATE_USER: 'example',
+        RESUME_TEX_PATH: '/var/task/users/example/resume.tex',
+        COVER_LETTER_TEX_PATH: '/var/task/users/example/cover_letter.tex',
+        SKILLS_GROUPED_PATH: '/var/task/users/example/skills_grouped.json',
+        REPLACEMENT_RULES_PATH: '/var/task/users/example/replacement_rules.json',
         FONTCONFIG_PATH: '/etc/fonts',
         FONTCONFIG_FILE: '/etc/fonts/fonts.conf',
         RESUME_URL_BASE: resumeUrlRedirectUrl.url,
@@ -205,11 +208,12 @@ export class PingedInStack extends cdk.Stack {
         PORTAL_URL_BASE: portalPublicUrl,
         JD_FETCH_MODE: 'urllib',
         USER_TEMPLATES_ROOT: '/var/task/users',
-        DEFAULT_TEMPLATE_USER: 'umang',
-        RESUME_TEX_PATH: '/var/task/users/umang/resume.tex',
-        COVER_LETTER_TEX_PATH: '/var/task/users/umang/cover_letter.tex',
-        SKILLS_GROUPED_PATH: '/var/task/users/umang/skills_grouped.json',
-        REPLACEMENT_RULES_PATH: '/var/task/users/umang/replacement_rules.json',
+        ADMIN_USERNAME: 'admin', // replace with your Cognito username
+        DEFAULT_TEMPLATE_USER: 'example',
+        RESUME_TEX_PATH: '/var/task/users/example/resume.tex',
+        COVER_LETTER_TEX_PATH: '/var/task/users/example/cover_letter.tex',
+        SKILLS_GROUPED_PATH: '/var/task/users/example/skills_grouped.json',
+        REPLACEMENT_RULES_PATH: '/var/task/users/example/replacement_rules.json',
         CHROME_BINARY: '/usr/bin/chromium',
         CHROMEDRIVER_PATH: '/usr/bin/chromedriver',
         FONTCONFIG_PATH: '/etc/fonts',
